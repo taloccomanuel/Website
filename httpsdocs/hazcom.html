@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="build-version" content="01.00w">
+  <title>HazCom</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    .splash {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 10000; display: none; align-items: center; justify-content: center;
+      flex-direction: column; transition: opacity 0.3s ease;
+    }
+    .splash .splash-title { color: #fff; font: bold 36px/1 sans-serif; margin-bottom: 20px; }
+    .splash img { max-width: 500px; max-height: 500px; }
+    #splash-green { background: #1b5e20; }
+    #version-indicator {
+      position: fixed; bottom: 8px; right: 8px; z-index: 9999;
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,0,0,0.55); color: #ccc; padding: 4px 10px;
+      border-radius: 12px; font: 11px/1 monospace; user-select: none;
+      pointer-events: none; transition: all 0.3s ease;
+    }
+    #version-indicator .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #888; transition: background 0.3s ease;
+    }
+    #version-indicator .dot.checking { background: #ffa726; animation: pulse 0.6s infinite alternate; }
+    #version-indicator .dot.found    { background: #66bb6a; }
+    #version-indicator .dot.error    { background: #ef5350; }
+    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <div id="splash-green" class="splash"><div class="splash-title">Website Ready</div><img src="https://pfcassociates.github.io/PFC_Website/PFC_images/PFC_LOGO_4_Transparent.png" alt=""></div>
+  <script>
+    // Auto-refresh: set to false to disable build-version polling
+    var AUTO_REFRESH = true;
+
+    // Show/hide: set to false to hide the website version indicator
+    var SHOW_WEB_VERSION = true;
+
+    // AudioContext for sound playback
+    var _audioCtx = null;
+    function unlockAudio() {
+      if (!_audioCtx) {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var buf = _audioCtx.createBuffer(1, 1, 22050);
+        var src = _audioCtx.createBufferSource();
+        src.buffer = buf;
+        src.connect(_audioCtx.destination);
+        src.start(0);
+      }
+      if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    }
+    document.addEventListener('click', unlockAudio, { once: false });
+    document.addEventListener('touchstart', unlockAudio, { once: false });
+
+    function playSoundFromDataUrl(dataUrl) {
+      try {
+        var ctx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        var base64 = dataUrl.split(',')[1];
+        var binary = atob(base64);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        ctx.decodeAudioData(bytes.buffer, function(audioBuffer) {
+          var source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(ctx.destination);
+          source.start(0);
+        });
+      } catch(e) {}
+    }
+
+    // Pre-load sound file from same-origin into localStorage
+    function cacheSound(url, key) {
+      if (localStorage.getItem(key)) return;
+      fetch(url).then(function(res) { return res.blob(); }).then(function(blob) {
+        var reader = new FileReader();
+        reader.onloadend = function() { localStorage.setItem(key, reader.result); };
+        reader.readAsDataURL(blob);
+      }).catch(function() {});
+    }
+    cacheSound('sounds/Website_Ready_Voice_1.mp3', 'web-sound-data');
+
+    // Show splash + play sound on update-triggered reloads
+    if (sessionStorage.getItem('web-pending-reload')) {
+      sessionStorage.removeItem('web-pending-reload');
+      if (navigator.vibrate) navigator.vibrate(200);
+      var splash = document.getElementById('splash-green');
+      var soundData = localStorage.getItem('web-sound-data');
+      if (soundData) playSoundFromDataUrl(soundData);
+      if (splash) {
+        splash.style.display = 'flex';
+        setTimeout(function() {
+          splash.style.opacity = '0';
+          setTimeout(function() { splash.style.display = 'none'; }, 300);
+        }, 1000);
+      }
+    }
+
+    // Auto-refresh: poll own HTML every 10s for build-version changes
+    (function() {
+      var POLL_INTERVAL = 10000;
+      var currentVersion = (document.querySelector('meta[name="build-version"]') || {}).content;
+      if (!currentVersion) return;
+      if (!AUTO_REFRESH) return;
+
+      var indicator = document.createElement('div');
+      indicator.id = 'version-indicator';
+      indicator.innerHTML = '<span class="dot"></span><span class="label">v' + currentVersion + '</span>';
+      if (SHOW_WEB_VERSION) document.body.appendChild(indicator);
+      var dot = indicator.querySelector('.dot');
+
+      function checkForUpdate() {
+        dot.className = 'dot checking';
+        fetch(window.location.href.split('?')[0] + '?_cb=' + Date.now(), { cache: 'no-store' })
+          .then(function(res) { return res.text(); })
+          .then(function(html) {
+            var match = html.match(/<meta\s+name="build-version"\s+content="([^"]+)"/);
+            if (match && match[1] !== currentVersion) {
+              dot.className = 'dot found';
+              indicator.querySelector('.label').textContent = 'Updating...';
+              sessionStorage.setItem('web-pending-reload', '1');
+              setTimeout(function() { window.location.reload(); }, 2000);
+            } else {
+              setTimeout(function() { dot.className = 'dot'; }, 800);
+              setTimeout(checkForUpdate, POLL_INTERVAL);
+            }
+          })
+          .catch(function() {
+            dot.className = 'dot error';
+            setTimeout(function() { dot.className = 'dot'; }, 2000);
+            setTimeout(checkForUpdate, POLL_INTERVAL);
+          });
+      }
+      setTimeout(checkForUpdate, POLL_INTERVAL);
+    })();
+
+    // Screen Wake Lock — keep screen on while page is visible
+    var _wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if (navigator.wakeLock) {
+          _wakeLock = await navigator.wakeLock.request('screen');
+          _wakeLock.addEventListener('release', function() { _wakeLock = null; });
+        }
+      } catch(e) {}
+    }
+    requestWakeLock();
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    });
+  </script>
+</body>
+</html>
