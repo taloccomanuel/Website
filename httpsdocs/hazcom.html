@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="build-version" content="01.04w">
+  <meta name="build-version" content="01.05w">
   <title>HazCom Annual Refresher 2026 — Clark Foundations</title>
   <style>
     /* ─── Reset & Base ─── */
@@ -193,6 +193,11 @@
     .confetti-piece { position: absolute; top: -20px; opacity: 0.8; }
     @keyframes confetti-fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
 
+    /* ─── Background Icon Decoration ─── */
+    .bg-icon { position: absolute; bottom: 30px; right: 60px; font-size: clamp(100px, 18vw, 220px); line-height: 1; opacity: 0.04; user-select: none; pointer-events: none; z-index: 0; filter: grayscale(0.3); }
+    .slide-inner { position: relative; z-index: 1; }
+    .h2-icon { margin-right: 12px; }
+
     /* ─── Responsive ─── */
     @media (max-width: 900px) {
       .slide { padding: 40px 24px; }
@@ -204,6 +209,7 @@
       .takeaway-grid { grid-template-columns: 1fr; }
       .stat-row { flex-direction: column; gap: 12px; }
       .section-num { display: none; }
+      .bg-icon { bottom: 10px; right: 20px; font-size: clamp(80px, 20vw, 150px); }
       .nav-arrow { width: 36px; height: 36px; font-size: 16px; }
       #nav-prev { left: 6px; }
       #nav-next { right: 6px; }
@@ -241,7 +247,7 @@
 <div class="slide">
   <div class="section-num">01</div>
   <div class="slide-inner">
-    <h2>Today's <span>Agenda</span></h2>
+    <h2><span class="h2-icon">&#128203;</span>Today's <span>Agenda</span></h2>
     <div class="accent-line"></div>
     <p>~20 minutes &bull; stay engaged &mdash; there will be quizzes!</p>
     <ul>
@@ -259,8 +265,9 @@
 <!-- 2: WHAT IS HAZCOM -->
 <div class="slide">
   <div class="section-num">02</div>
+  <div class="bg-icon">&#129514;&#129535;</div>
   <div class="slide-inner">
-    <h2>What is <span>HazCom?</span></h2>
+    <h2><span class="h2-icon">&#129514;</span>What is <span>HazCom?</span></h2>
     <div class="accent-line"></div>
     <div class="two-col">
       <div>
@@ -280,8 +287,9 @@
 <!-- 3: WHY IT MATTERS -->
 <div class="slide">
   <div class="section-num">03</div>
+  <div class="bg-icon">&#128176;</div>
   <div class="slide-inner">
-    <h2>Why Does It <span>Matter?</span></h2>
+    <h2><span class="h2-icon">&#9888;&#65039;</span>Why Does It <span>Matter?</span></h2>
     <div class="accent-line"></div>
     <div class="stat-row">
       <div class="stat-box"><div class="stat-num">~190K</div><div class="stat-label">Illnesses from chemical exposure in U.S. workplaces annually</div></div>
@@ -297,8 +305,9 @@
 <!-- 4: CLARK'S POLICY -->
 <div class="slide">
   <div class="section-num">04</div>
+  <div class="bg-icon">&#128220;</div>
   <div class="slide-inner">
-    <h2>Clark's HazCom <span>Policy</span></h2>
+    <h2><span class="h2-icon">&#128220;</span>Clark's HazCom <span>Policy</span></h2>
     <div class="accent-line"></div>
     <p><strong>Purpose:</strong> Establish the minimum requirements for Clark and Its Affiliates for an effective hazard communication program.</p>
     <div class="callout" style="margin-top:16px;">
@@ -311,8 +320,9 @@
 <!-- 5: RESPONSIBILITIES -->
 <div class="slide">
   <div class="section-num">05</div>
+  <div class="bg-icon">&#129521;</div>
   <div class="slide-inner">
-    <h2>Who Is <span>Responsible?</span></h2>
+    <h2><span class="h2-icon">&#128736;&#65039;</span>Who Is <span>Responsible?</span></h2>
     <div class="accent-line"></div>
     <p>Per the Clark HazCom Program &mdash; click each role to see their duties.</p>
     <div class="role-cards">
@@ -377,8 +387,9 @@
 <!-- 7: THREE PILLARS -->
 <div class="slide">
   <div class="section-num">06</div>
+  <div class="bg-icon">&#127959;&#65039;</div>
   <div class="slide-inner">
-    <h2>The Three Pillars of <span>HazCom</span></h2>
+    <h2><span class="h2-icon">&#127959;&#65039;</span>The Three Pillars of <span>HazCom</span></h2>
     <div class="accent-line"></div>
     <p>Clark's written program must describe how each of these will be met (Section 5):</p>
     <div class="takeaway-grid">
@@ -393,10 +404,11 @@
 <!-- 8: LABELS -->
 <div class="slide">
   <div class="section-num">07</div>
+  <div class="bg-icon">&#128255;</div>
   <div class="slide-inner">
-    <h2>Reading a GHS <span>Label</span></h2>
+    <h2><span class="h2-icon">&#127991;&#65039;</span>Reading a GHS <span>Label</span></h2>
     <div class="accent-line"></div>
-    <p>Per Section 6(a), every container must have these 6 elements. Click each one.</p>
+    <p>Per Section 6(a), every container must have these 6 elements.</p>
     <div class="label-elements">
       <div class="label-el" onclick="highlightLabel(this)"><div class="label-el-title">&#9312; Product Identifier</div><div class="label-el-desc">Chemical name or product number &mdash; links to SDS</div></div>
       <div class="label-el" onclick="highlightLabel(this)"><div class="label-el-title">&#9313; Signal Word</div><div class="label-el-desc">DANGER (severe) or WARNING (less severe)</div></div>
@@ -411,7 +423,7 @@
 <!-- 9: SIGNAL WORDS -->
 <div class="slide">
   <div class="slide-inner">
-    <h2>Signal <span>Words</span></h2>
+    <h2><span class="h2-icon">&#128226;</span>Signal <span>Words</span></h2>
     <div class="accent-line"></div>
     <p>There are only two. Know the difference. A label will <strong>never</strong> have both.</p>
     <div class="signal-row">
@@ -424,8 +436,9 @@
 <!-- 10: PICTOGRAMS -->
 <div class="slide">
   <div class="section-num">08</div>
+  <div class="bg-icon">&#9830;&#65039;</div>
   <div class="slide-inner">
-    <h2>The 8 GHS <span>Pictograms</span></h2>
+    <h2><span class="h2-icon">&#9830;&#65039;</span>The 8 GHS <span>Pictograms</span></h2>
     <div class="accent-line"></div>
     <p>Per Attachment 1 &mdash; red diamond, black symbol, white background. <strong>Click to flip.</strong></p>
     <div class="picto-grid">
@@ -482,8 +495,9 @@
 <!-- 12: SDS OVERVIEW -->
 <div class="slide">
   <div class="section-num">09</div>
+  <div class="bg-icon">&#128451;&#65039;</div>
   <div class="slide-inner">
-    <h2>Safety Data Sheets &mdash; 16 <span>Sections</span></h2>
+    <h2><span class="h2-icon">&#128451;&#65039;</span>Safety Data Sheets &mdash; 16 <span>Sections</span></h2>
     <div class="accent-line"></div>
     <p>Per Section 6(b), SDS are maintained by the Project Safety Manager. Copies available upon request. Sections 1&ndash;11 &amp; 16 are <strong>mandatory</strong>.</p>
     <div class="sds-grid">
@@ -548,8 +562,9 @@
 <!-- 14: TRAINING -->
 <div class="slide">
   <div class="section-num">10</div>
+  <div class="bg-icon">&#127891;</div>
   <div class="slide-inner">
-    <h2>Employee <span>Training</span></h2>
+    <h2><span class="h2-icon">&#127891;</span>Employee <span>Training</span></h2>
     <div class="accent-line"></div>
     <div class="two-col">
       <div>
@@ -579,8 +594,9 @@
 <!-- 15: MULTI-EMPLOYER -->
 <div class="slide">
   <div class="section-num">11</div>
+  <div class="bg-icon">&#128679;</div>
   <div class="slide-inner">
-    <h2>Multi-Employer <span>Workplaces</span></h2>
+    <h2><span class="h2-icon">&#128679;</span>Multi-Employer <span>Workplaces</span></h2>
     <div class="accent-line"></div>
     <p>Special requirements when trades share a site &mdash; this applies to us every day on construction sites.</p>
     <div class="takeaway-grid">
@@ -594,8 +610,9 @@
 <!-- 16: WHAT'S NEW 2026 -->
 <div class="slide">
   <div class="section-num">12</div>
+  <div class="bg-icon">&#128240;</div>
   <div class="slide-inner">
-    <h2>What's New for <span>2026</span></h2>
+    <h2><span class="h2-icon">&#128240;</span>What's New for <span>2026</span></h2>
     <div class="accent-line"></div>
     <div class="callout danger">
       <p><strong>This is federal law, not optional.</strong> OSHA published the HazCom 2024 Final Rule aligning 29 CFR 1910.1200 with GHS Revision 7. Clark's current policy (May 2016) was written under GHS Rev 3 &mdash; <strong>we are legally required to update our program</strong> to meet the new requirements by the compliance deadlines.</p>
@@ -612,7 +629,7 @@
 <!-- 17: WHAT THIS MEANS -->
 <div class="slide">
   <div class="slide-inner">
-    <h2>Clark Must <span>Update</span></h2>
+    <h2><span class="h2-icon">&#128736;&#65039;</span>Clark Must <span>Update</span></h2>
     <div class="accent-line"></div>
     <p>Clark's written HazCom policy needs to be revised to reflect the OSHA 2024 changes. Here's what that looks like in practice:</p>
     <div class="takeaway-grid" style="margin-top:16px;">
@@ -667,7 +684,7 @@
 <!-- 19: SCORE -->
 <div class="slide" style="text-align:center;">
   <div class="slide-inner">
-    <h2>Your <span>Score</span></h2>
+    <h2><span class="h2-icon">&#127942;</span>Your <span>Score</span></h2>
     <div class="accent-line" style="margin:16px auto 28px;"></div>
     <div class="score-ring"><div class="big-score" id="final-score">-- / 7</div></div>
     <div id="final-label">Answer all quiz questions to see your results</div>
@@ -677,7 +694,7 @@
 <!-- 20: TAKEAWAYS -->
 <div class="slide">
   <div class="slide-inner">
-    <h2>Key <span>Takeaways</span></h2>
+    <h2><span class="h2-icon">&#128161;</span>Key <span>Takeaways</span></h2>
     <div class="accent-line"></div>
     <div class="callout"><p><strong>1.</strong> HazCom stands on <strong>3 pillars</strong>: Labels, SDS, and Training &mdash; all three are required.</p></div>
     <div class="callout" style="margin-top:10px;"><p><strong>2.</strong> Every container must be labeled. Every chemical needs an SDS. Every employee needs training.</p></div>
