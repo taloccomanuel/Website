@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="build-version" content="01.00w">
-  <title>HazCom</title>
+  <meta name="build-version" content="01.01w">
+  <title>HazCom Annual Refresher 2026 — Clark Foundations</title>
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background: #0b1a2e; color: #e8edf3; }
+
+    /* ─── Auto-update splashes ─── */
     .splash {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 10000; display: none; align-items: center; justify-content: center;
@@ -26,133 +31,977 @@
       width: 8px; height: 8px; border-radius: 50%;
       background: #888; transition: background 0.3s ease;
     }
-    #version-indicator .dot.checking { background: #ffa726; animation: pulse 0.6s infinite alternate; }
+    #version-indicator .dot.checking { background: #ffa726; animation: blink 0.6s infinite alternate; }
     #version-indicator .dot.found    { background: #66bb6a; }
     #version-indicator .dot.error    { background: #ef5350; }
-    @keyframes pulse { from { opacity: 1; } to { opacity: 0.4; } }
+    @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* ─── Slide Container ─── */
+    .deck { position: relative; width: 100%; height: calc(100% - 48px); }
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 60px;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      transform: translateX(40px);
+      overflow-y: auto;
+    }
+    .slide.active {
+      opacity: 1; visibility: visible; transform: translateX(0);
+    }
+    .slide.exit-left {
+      opacity: 0; visibility: hidden; transform: translateX(-40px);
+    }
+
+    /* ─── Slide Backgrounds ─── */
+    .bg-dark     { background: linear-gradient(135deg, #0b1a2e 0%, #162d50 100%); }
+    .bg-blue     { background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%); }
+    .bg-navy     { background: linear-gradient(135deg, #1a237e 0%, #283593 100%); }
+    .bg-orange   { background: linear-gradient(135deg, #e65100 0%, #f57c00 100%); }
+    .bg-green    { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); }
+    .bg-purple   { background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%); }
+    .bg-teal     { background: linear-gradient(135deg, #004d40 0%, #00695c 100%); }
+    .bg-red      { background: linear-gradient(135deg, #b71c1c 0%, #c62828 100%); }
+    .bg-charcoal { background: linear-gradient(135deg, #212121 0%, #37474f 100%); }
+
+    /* ─── Typography ─── */
+    .slide h1 { font-size: clamp(28px, 4vw, 52px); font-weight: 800; margin-bottom: 12px; text-align: center; line-height: 1.15; }
+    .slide h2 { font-size: clamp(22px, 3vw, 38px); font-weight: 700; margin-bottom: 10px; text-align: center; line-height: 1.2; }
+    .slide h3 { font-size: clamp(18px, 2.2vw, 28px); font-weight: 600; margin-bottom: 8px; }
+    .slide p, .slide li { font-size: clamp(14px, 1.6vw, 22px); line-height: 1.55; }
+    .slide ul { list-style: none; text-align: left; width: 100%; max-width: 800px; }
+    .slide ul li { padding: 8px 0 8px 32px; position: relative; }
+    .slide ul li::before { content: ''; position: absolute; left: 6px; top: 16px; width: 10px; height: 10px; border-radius: 50%; background: #ffa726; }
+    .subtitle { font-size: clamp(14px, 1.5vw, 20px); opacity: 0.8; margin-bottom: 24px; text-align: center; }
+    .accent  { color: #ffa726; }
+    .accent-g { color: #66bb6a; }
+    .accent-r { color: #ef5350; }
+    .accent-b { color: #64b5f6; }
+    .small   { font-size: clamp(12px, 1.1vw, 16px); opacity: 0.65; margin-top: 16px; text-align: center; }
+
+    /* ─── Cards / Boxes ─── */
+    .card-row { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 20px; width: 100%; max-width: 1000px; }
+    .card {
+      background: rgba(255,255,255,0.08); border-radius: 14px; padding: 24px 20px;
+      flex: 1 1 220px; max-width: 300px; text-align: center;
+      border: 1px solid rgba(255,255,255,0.1); transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .card .icon { font-size: 42px; margin-bottom: 10px; }
+    .card h3 { margin-bottom: 8px; font-size: clamp(16px, 1.6vw, 22px); }
+    .card p  { font-size: clamp(13px, 1.2vw, 16px); opacity: 0.85; }
+
+    /* ─── Pillar color accents ─── */
+    .card.pillar-label  { border-left: 4px solid #ffa726; }
+    .card.pillar-sds    { border-left: 4px solid #42a5f5; }
+    .card.pillar-train  { border-left: 4px solid #66bb6a; }
+
+    /* ─── Responsibility chain ─── */
+    .resp-chain { display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 18px; width: 100%; max-width: 650px; }
+    .resp-item {
+      display: flex; align-items: center; gap: 16px; width: 100%;
+      background: rgba(255,255,255,0.07); border-radius: 12px; padding: 16px 20px;
+      border-left: 4px solid #ffa726;
+    }
+    .resp-item .r-icon { font-size: 32px; flex-shrink: 0; }
+    .resp-item strong { display: block; font-size: clamp(15px, 1.5vw, 20px); }
+    .resp-item span { font-size: clamp(13px, 1.2vw, 16px); opacity: 0.8; }
+    .resp-arrow { font-size: 24px; opacity: 0.5; }
+
+    /* ─── Label element grid ─── */
+    .label-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 18px; width: 100%; max-width: 900px; }
+    .label-item {
+      background: rgba(255,255,255,0.07); border-radius: 10px; padding: 16px;
+      display: flex; align-items: center; gap: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .label-item .li-num {
+      width: 34px; height: 34px; border-radius: 50%; background: #ffa726; color: #1a1a1a;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex-shrink: 0;
+    }
+
+    /* ─── Pictogram grid ─── */
+    .picto-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 18px; width: 100%; max-width: 860px; }
+    .picto-card {
+      background: #fff; border-radius: 4px; padding: 8px; text-align: center;
+      transform: rotate(45deg); width: 110px; height: 110px; margin: 30px auto;
+      display: flex; align-items: center; justify-content: center;
+      border: 4px solid #d32f2f; position: relative;
+    }
+    .picto-card .p-inner { transform: rotate(-45deg); font-size: 36px; line-height: 1; }
+    .picto-label { text-align: center; font-size: clamp(11px, 1vw, 14px); font-weight: 600; margin-top: -10px; color: #e8edf3; }
+    .picto-sub   { text-align: center; font-size: clamp(10px, 0.85vw, 12px); opacity: 0.7; margin-top: 2px; }
+
+    /* ─── Signal word boxes ─── */
+    .signal-row { display: flex; gap: 30px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+    .signal-box {
+      border-radius: 16px; padding: 30px 36px; text-align: center; min-width: 260px;
+      border: 3px solid; flex: 1; max-width: 380px;
+    }
+    .signal-box.danger { border-color: #ef5350; background: rgba(239,83,80,0.1); }
+    .signal-box.warning { border-color: #ffa726; background: rgba(255,167,38,0.1); }
+    .signal-box h2 { font-size: 36px; letter-spacing: 4px; }
+    .signal-box p { margin-top: 10px; font-size: clamp(14px, 1.3vw, 18px); }
+
+    /* ─── SDS section list ─── */
+    .sds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; margin-top: 16px; width: 100%; max-width: 900px; }
+    .sds-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      border-radius: 8px; background: rgba(255,255,255,0.05);
+      font-size: clamp(13px, 1.15vw, 16px);
+    }
+    .sds-item .sds-num {
+      width: 28px; height: 28px; border-radius: 6px; background: #42a5f5; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0;
+    }
+    .sds-item.optional { opacity: 0.55; }
+    .sds-item.optional .sds-num { background: #78909c; }
+
+    /* ─── Quiz ─── */
+    .quiz-wrap { width: 100%; max-width: 740px; margin-top: 16px; }
+    .quiz-q { font-size: clamp(16px, 1.8vw, 24px); font-weight: 700; margin-bottom: 18px; text-align: center; min-height: 60px; }
+    .quiz-opts { display: flex; flex-direction: column; gap: 12px; }
+    .quiz-opt {
+      background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px; padding: 16px 20px; cursor: pointer;
+      font-size: clamp(14px, 1.4vw, 19px); transition: all 0.25s;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .quiz-opt:hover:not(.locked) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); }
+    .quiz-opt.correct { background: rgba(76,175,80,0.25); border-color: #4caf50; }
+    .quiz-opt.correct::after { content: ' \u2714'; margin-left: auto; color: #66bb6a; font-weight: 800; }
+    .quiz-opt.wrong { background: rgba(244,67,54,0.2); border-color: #f44336; }
+    .quiz-opt.wrong::after { content: ' \u2718'; margin-left: auto; color: #ef5350; font-weight: 800; }
+    .quiz-opt .opt-letter {
+      width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0;
+    }
+    .quiz-feedback {
+      text-align: center; margin-top: 16px; font-size: clamp(14px, 1.3vw, 18px);
+      min-height: 28px; font-weight: 600;
+    }
+    .quiz-nav { display: flex; justify-content: center; margin-top: 14px; }
+    .quiz-nav button {
+      background: #ffa726; color: #1a1a1a; border: none; border-radius: 8px;
+      padding: 10px 28px; font-size: 16px; font-weight: 700; cursor: pointer;
+      display: none; transition: background 0.2s;
+    }
+    .quiz-nav button:hover { background: #ffb74d; }
+    .quiz-nav button.show { display: inline-block; }
+
+    /* ─── Score display ─── */
+    .score-badge {
+      position: absolute; top: 16px; right: 20px;
+      background: rgba(255,255,255,0.1); border-radius: 20px; padding: 6px 16px;
+      font: 700 14px/1 monospace; color: #ffa726;
+    }
+    .big-score { font-size: clamp(48px, 8vw, 100px); font-weight: 800; margin: 16px 0; }
+    .score-ring {
+      width: 200px; height: 200px; border-radius: 50%;
+      border: 12px solid rgba(255,255,255,0.1); position: relative;
+      display: flex; align-items: center; justify-content: center; margin: 20px auto;
+    }
+    .score-ring .ring-fill {
+      position: absolute; inset: -12px; border-radius: 50%;
+      border: 12px solid transparent; border-top-color: #66bb6a;
+      transform: rotate(-90deg);
+    }
+
+    /* ─── Columns ─── */
+    .two-col { display: flex; gap: 30px; width: 100%; max-width: 900px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+    .two-col .col { flex: 1; min-width: 280px; }
+
+    /* ─── Highlights / callouts ─── */
+    .callout {
+      background: rgba(255,167,38,0.12); border-left: 4px solid #ffa726;
+      border-radius: 0 10px 10px 0; padding: 16px 20px; margin-top: 16px;
+      width: 100%; max-width: 800px; text-align: left;
+    }
+    .callout.blue  { background: rgba(66,165,245,0.12); border-left-color: #42a5f5; }
+    .callout.green { background: rgba(102,187,106,0.12); border-left-color: #66bb6a; }
+    .callout.red   { background: rgba(239,83,80,0.12); border-left-color: #ef5350; }
+    .funfact {
+      display: inline-block; background: rgba(255,255,255,0.08); border-radius: 20px;
+      padding: 8px 18px; font-size: clamp(13px, 1.2vw, 17px); margin-top: 12px;
+    }
+    .tag { display: inline-block; background: #ffa726; color: #1a1a1a; border-radius: 6px; padding: 3px 10px; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+    .tag.blue { background: #42a5f5; color: #fff; }
+    .tag.green { background: #66bb6a; color: #1a1a1a; }
+    .tag.red { background: #ef5350; color: #fff; }
+
+    /* ─── Update cards ─── */
+    .update-list { width: 100%; max-width: 820px; margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .update-item {
+      background: rgba(255,255,255,0.06); border-radius: 12px; padding: 18px 20px;
+      border-left: 4px solid #42a5f5; text-align: left;
+    }
+    .update-item h3 { color: #64b5f6; font-size: clamp(15px, 1.4vw, 20px); margin-bottom: 4px; }
+    .update-item p  { font-size: clamp(13px, 1.2vw, 17px); opacity: 0.85; }
+
+    /* ─── Bottom Navigation Bar ─── */
+    .nav-bar {
+      position: fixed; bottom: 0; left: 0; width: 100%; height: 48px;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 500; user-select: none;
+    }
+    .nav-bar button {
+      background: none; border: 1px solid rgba(255,255,255,0.2); color: #ccc;
+      border-radius: 8px; padding: 6px 16px; font-size: 14px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-bar button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .nav-bar button:disabled { opacity: 0.25; cursor: default; }
+    .nav-center { display: flex; align-items: center; gap: 16px; }
+    .slide-counter { font: 600 14px/1 monospace; color: #aaa; }
+    .timer { font: 600 13px/1 monospace; color: #78909c; }
+    .progress-track {
+      position: fixed; bottom: 48px; left: 0; width: 100%; height: 3px;
+      background: rgba(255,255,255,0.06); z-index: 501;
+    }
+    .progress-fill { height: 100%; background: #ffa726; transition: width 0.35s ease; width: 0%; }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    .slide.active .anim { animation: fadeInUp 0.5s ease both; }
+    .slide.active .anim-d1 { animation-delay: 0.1s; }
+    .slide.active .anim-d2 { animation-delay: 0.2s; }
+    .slide.active .anim-d3 { animation-delay: 0.3s; }
+    .slide.active .anim-d4 { animation-delay: 0.4s; }
+    .slide.active .anim-d5 { animation-delay: 0.5s; }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 700px) {
+      .slide { padding: 24px 20px; }
+      .picto-grid { grid-template-columns: repeat(2, 1fr); }
+      .picto-card { width: 80px; height: 80px; margin: 20px auto; }
+      .picto-card .p-inner { font-size: 26px; }
+      .card { max-width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <div id="splash-green" class="splash"><div class="splash-title">Website Ready</div><img src="https://pfcassociates.github.io/PFC_Website/PFC_images/PFC_LOGO_4_Transparent.png" alt=""></div>
-  <script>
-    // Auto-refresh: set to false to disable build-version polling
-    var AUTO_REFRESH = true;
 
-    // Show/hide: set to false to hide the website version indicator
-    var SHOW_WEB_VERSION = true;
+<!-- Auto-update splash -->
+<div id="splash-green" class="splash"><div class="splash-title">Website Ready</div><img src="https://pfcassociates.github.io/PFC_Website/PFC_images/PFC_LOGO_4_Transparent.png" alt=""></div>
 
-    // AudioContext for sound playback
-    var _audioCtx = null;
-    function unlockAudio() {
-      if (!_audioCtx) {
-        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        var buf = _audioCtx.createBuffer(1, 1, 22050);
-        var src = _audioCtx.createBufferSource();
-        src.buffer = buf;
-        src.connect(_audioCtx.destination);
-        src.start(0);
-      }
-      if (_audioCtx.state === 'suspended') _audioCtx.resume();
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--                     S L I D E S                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="deck" id="deck">
+
+<!-- ────── 1  TITLE ────── -->
+<div class="slide bg-dark active" data-s="1">
+  <div class="anim" style="font-size:48px;margin-bottom:8px;">&#9888;&#65039;</div>
+  <h1 class="anim anim-d1">HazCom Annual Refresher</h1>
+  <p class="subtitle anim anim-d2">Clark Foundations &mdash; 2026</p>
+  <div class="anim anim-d3" style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <span class="tag">OSHA 29 CFR 1910.1200</span>
+    <span class="tag blue">GHS Aligned</span>
+    <span class="tag green">Interactive Session</span>
+  </div>
+  <p class="small anim anim-d4">Use <b>&larr; &rarr;</b> arrow keys or the buttons below to navigate</p>
+</div>
+
+<!-- ────── 2  AGENDA ────── -->
+<div class="slide bg-navy" data-s="2">
+  <h2 class="anim">Today's Agenda</h2>
+  <p class="subtitle anim anim-d1">~20 minutes &bull; stay engaged &mdash; there will be quizzes!</p>
+  <ul class="anim anim-d2">
+    <li>What is HazCom &amp; why does it matter?</li>
+    <li>Clark's HazCom Policy &mdash; responsibilities</li>
+    <li>The 3 Pillars: <span class="accent">Labels</span>, <span class="accent-b">SDS</span>, <span class="accent-g">Training</span></li>
+    <li>GHS Pictograms &amp; Signal Words</li>
+    <li>Interactive quizzes &amp; challenges</li>
+    <li>What's new for 2026 (OSHA updates)</li>
+    <li>Key takeaways &amp; open discussion</li>
+  </ul>
+</div>
+
+<!-- ────── 3  WHAT IS HAZCOM ────── -->
+<div class="slide bg-blue" data-s="3">
+  <h1 class="anim">What is HazCom?</h1>
+  <p class="subtitle anim anim-d1">Your <b>"Right to Know"</b></p>
+  <div class="two-col anim anim-d2">
+    <div class="col">
+      <div class="callout">
+        <p><b>OSHA's Hazard Communication Standard</b> (29 CFR 1910.1200) ensures that every worker exposed to hazardous chemicals knows what those chemicals are, what the risks are, and how to protect themselves.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="callout blue">
+        <p>Aligned with the <b>Globally Harmonized System (GHS)</b> &mdash; a worldwide standard for classifying chemicals and communicating hazards through labels and Safety Data Sheets.</p>
+      </div>
+    </div>
+  </div>
+  <div class="funfact anim anim-d3">Did you know? HazCom is consistently one of OSHA's <b>Top 10 most-cited violations</b> every year.</div>
+</div>
+
+<!-- ────── 4  WHY IT MATTERS ────── -->
+<div class="slide bg-red" data-s="4">
+  <h1 class="anim">Why Does It Matter?</h1>
+  <div class="card-row anim anim-d1">
+    <div class="card">
+      <div class="icon">&#128200;</div>
+      <h3>~190,000</h3>
+      <p>Illnesses caused by chemical exposure in U.S. workplaces annually</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#128176;</div>
+      <h3>$14,502</h3>
+      <p>OSHA penalty <b>per serious violation</b> &mdash; willful violations up to $156K+</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#9201;&#65039;</div>
+      <h3>Seconds</h3>
+      <p>That's all you have to react properly in a chemical emergency</p>
+    </div>
+  </div>
+  <div class="callout red anim anim-d2">
+    <p><b>Bottom line:</b> Knowing your chemicals isn't optional &mdash; it protects your crew, avoids fines, and saves lives.</p>
+  </div>
+</div>
+
+<!-- ────── 5  CLARK'S POLICY ────── -->
+<div class="slide bg-dark" data-s="5">
+  <h1 class="anim">Clark's HazCom Policy</h1>
+  <p class="subtitle anim anim-d1">Effective May 2016 &bull; Applies to all Clark operations</p>
+  <div class="callout anim anim-d2">
+    <p><b>Purpose:</b> Establish the minimum requirements for Clark and Its Affiliates for an effective hazard communication program.</p>
+  </div>
+  <div class="callout blue anim anim-d3">
+    <p><b>Scope:</b> Applies in its entirety to <b>all Clark operations</b> unless a variance is granted by the <b>Vice President of Safety</b>.</p>
+  </div>
+  <div class="funfact anim anim-d4">This means every jobsite, every trade, every day &mdash; no exceptions without VP approval.</div>
+</div>
+
+<!-- ────── 6  RESPONSIBILITIES ────── -->
+<div class="slide bg-navy" data-s="6">
+  <h2 class="anim">Who's Responsible?</h2>
+  <p class="subtitle anim anim-d1">Accountability flows top-down</p>
+  <div class="resp-chain anim anim-d2">
+    <div class="resp-item">
+      <div class="r-icon">&#128119;</div>
+      <div><strong>Project Superintendent</strong><span>Overall responsibility for establishing &amp; ensuring compliance</span></div>
+    </div>
+    <div class="resp-arrow">&darr;</div>
+    <div class="resp-item">
+      <div class="r-icon">&#128737;&#65039;</div>
+      <div><strong>Project Safety Manager</strong><span>Implements and monitors the program day-to-day</span></div>
+    </div>
+    <div class="resp-arrow">&darr;</div>
+    <div class="resp-item">
+      <div class="r-icon">&#128101;</div>
+      <div><strong>All Managers &amp; Supervisors</strong><span>Enforce the procedure &amp; ensure every employee follows it</span></div>
+    </div>
+  </div>
+  <p class="small anim anim-d3">That includes <b>everyone in this room</b> &mdash; you are the enforcement layer.</p>
+</div>
+
+<!-- ────── 7  THREE PILLARS ────── -->
+<div class="slide bg-blue" data-s="7">
+  <h1 class="anim">The 3 Pillars of HazCom</h1>
+  <p class="subtitle anim anim-d1">Every compliant program stands on these three legs</p>
+  <div class="card-row anim anim-d2">
+    <div class="card pillar-label">
+      <div class="icon">&#127991;&#65039;</div>
+      <h3 class="accent">Labels</h3>
+      <p>Every container must be properly labeled with GHS elements</p>
+    </div>
+    <div class="card pillar-sds">
+      <div class="icon">&#128196;</div>
+      <h3 class="accent-b">Safety Data Sheets</h3>
+      <p>SDS on-site for every hazardous chemical, accessible to all</p>
+    </div>
+    <div class="card pillar-train">
+      <div class="icon">&#127891;</div>
+      <h3 class="accent-g">Training</h3>
+      <p>Initial assignment + whenever new chemical hazards are introduced</p>
+    </div>
+  </div>
+  <div class="funfact anim anim-d3">Remove any one pillar and the whole program collapses.</div>
+</div>
+
+<!-- ────── 8  LABELS ────── -->
+<div class="slide bg-dark" data-s="8">
+  <span class="tag anim">PILLAR 1</span>
+  <h1 class="anim anim-d1">Labels &mdash; The 6 Required Elements</h1>
+  <p class="subtitle anim anim-d2">Every manufacturer label must include all six</p>
+  <div class="label-grid anim anim-d3">
+    <div class="label-item"><div class="li-num">1</div><span><b>Product Identifier</b> &mdash; name or number</span></div>
+    <div class="label-item"><div class="li-num">2</div><span><b>Signal Word</b> &mdash; Danger or Warning</span></div>
+    <div class="label-item"><div class="li-num">3</div><span><b>Hazard Statement(s)</b> &mdash; nature of hazard</span></div>
+    <div class="label-item"><div class="li-num">4</div><span><b>Pictogram(s)</b> &mdash; diamond symbols</span></div>
+    <div class="label-item"><div class="li-num">5</div><span><b>Precautionary Statement(s)</b> &mdash; protection</span></div>
+    <div class="label-item"><div class="li-num">6</div><span><b>Manufacturer Info</b> &mdash; name, address, phone</span></div>
+  </div>
+  <div class="callout anim anim-d4">
+    <p><b>Workplace rule:</b> The employer shall ensure that <b>each container</b> of hazardous chemicals is labeled. No exceptions &mdash; including secondary containers.</p>
+  </div>
+</div>
+
+<!-- ────── 9  SIGNAL WORDS ────── -->
+<div class="slide bg-charcoal" data-s="9">
+  <span class="tag anim">PILLAR 1</span>
+  <h2 class="anim anim-d1">Signal Words</h2>
+  <p class="subtitle anim anim-d2">There are only two. Know the difference.</p>
+  <div class="signal-row anim anim-d3">
+    <div class="signal-box danger">
+      <h2 class="accent-r">DANGER</h2>
+      <p><b>More severe</b> hazards</p>
+      <p style="margin-top:8px;font-size:14px;opacity:0.8;">Acute toxicity (fatal/toxic), explosives, flammable gases Cat 1, etc.</p>
+    </div>
+    <div class="signal-box warning">
+      <h2 class="accent">WARNING</h2>
+      <p><b>Less severe</b> hazards</p>
+      <p style="margin-top:8px;font-size:14px;opacity:0.8;">Irritants, harmful if swallowed, combustible dusts, etc.</p>
+    </div>
+  </div>
+  <p class="small anim anim-d4">A label will <b>never</b> have both DANGER and WARNING &mdash; it's always one or the other.</p>
+</div>
+
+<!-- ────── 10  PICTOGRAMS ────── -->
+<div class="slide bg-dark" data-s="10">
+  <span class="tag anim">PILLAR 1</span>
+  <h2 class="anim anim-d1">The 8 GHS Pictograms</h2>
+  <p class="subtitle anim anim-d2">Red diamond border &bull; Black symbol &bull; White background</p>
+  <div class="picto-grid anim anim-d3">
+    <div>
+      <div class="picto-card"><div class="p-inner">&#128293;</div></div>
+      <div class="picto-label">Flame</div>
+      <div class="picto-sub">Flammables, Self-Reactives, Pyrophorics</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#9854;</div></div>
+      <div class="picto-label">Flame Over Circle</div>
+      <div class="picto-sub">Oxidizers</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#10071;</div></div>
+      <div class="picto-label">Exclamation Mark</div>
+      <div class="picto-sub">Irritant, Acute Toxicity (harmful)</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#128165;</div></div>
+      <div class="picto-label">Exploding Bomb</div>
+      <div class="picto-sub">Explosives, Self-Reactives</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#9763;&#65039;</div></div>
+      <div class="picto-label">Corrosion</div>
+      <div class="picto-sub">Corrosives (skin, metals)</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#129695;</div></div>
+      <div class="picto-label">Gas Cylinder</div>
+      <div class="picto-sub">Gases Under Pressure</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#128128;</div></div>
+      <div class="picto-label">Health Hazard</div>
+      <div class="picto-sub">Carcinogen, Organ Toxicity, Mutagenicity</div>
+    </div>
+    <div>
+      <div class="picto-card"><div class="p-inner">&#9760;&#65039;</div></div>
+      <div class="picto-label">Skull &amp; Crossbones</div>
+      <div class="picto-sub">Acute Toxicity (severe)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ────── 11  PICTOGRAM QUIZ ────── -->
+<div class="slide bg-purple" data-s="11">
+  <span class="tag anim">QUIZ TIME</span>
+  <h2 class="anim anim-d1">Pictogram Challenge</h2>
+  <div class="score-badge" id="score1-badge">Score: 0 / 0</div>
+  <div class="quiz-wrap anim anim-d2" id="quiz1"></div>
+</div>
+
+<!-- ────── 12  SDS OVERVIEW ────── -->
+<div class="slide bg-blue" data-s="12">
+  <span class="tag blue anim">PILLAR 2</span>
+  <h1 class="anim anim-d1">Safety Data Sheets (SDS)</h1>
+  <p class="subtitle anim anim-d2">The chemical's complete dossier</p>
+  <div class="two-col anim anim-d3">
+    <div class="col">
+      <div class="callout blue">
+        <p><b>Employers shall have an SDS</b> in the workplace for <b>each hazardous chemical</b> they use. No chemical on-site without its SDS.</p>
+      </div>
+      <div class="callout" style="margin-top:12px;">
+        <p><b>Maintained by:</b> The Project Safety Manager</p>
+        <p style="margin-top:6px;"><b>Availability:</b> Copies may be obtained upon request by any employee</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="callout green">
+        <p><b>Key point for management:</b> In multi-employer workplaces, you must provide other employers' employees access to SDS for chemicals they may be exposed to.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ────── 13  SDS 16 SECTIONS ────── -->
+<div class="slide bg-dark" data-s="13">
+  <span class="tag blue anim">PILLAR 2</span>
+  <h2 class="anim anim-d1">SDS &mdash; The 16 Sections</h2>
+  <p class="subtitle anim anim-d2">Sections 1&ndash;11 &amp; 16 = <b>mandatory</b> &nbsp;&bull;&nbsp; 12&ndash;15 = optional</p>
+  <div class="sds-grid anim anim-d3">
+    <div class="sds-item"><div class="sds-num">1</div> Identification</div>
+    <div class="sds-item"><div class="sds-num">2</div> Hazard(s) Identification</div>
+    <div class="sds-item"><div class="sds-num">3</div> Composition / Ingredients</div>
+    <div class="sds-item"><div class="sds-num">4</div> First-Aid Measures</div>
+    <div class="sds-item"><div class="sds-num">5</div> Fire-Fighting Measures</div>
+    <div class="sds-item"><div class="sds-num">6</div> Accidental Release</div>
+    <div class="sds-item"><div class="sds-num">7</div> Handling &amp; Storage</div>
+    <div class="sds-item"><div class="sds-num">8</div> Exposure Controls / PPE</div>
+    <div class="sds-item"><div class="sds-num">9</div> Physical &amp; Chemical Props</div>
+    <div class="sds-item"><div class="sds-num">10</div> Stability &amp; Reactivity</div>
+    <div class="sds-item"><div class="sds-num">11</div> Toxicological Info</div>
+    <div class="sds-item optional"><div class="sds-num">12</div> Ecological Info</div>
+    <div class="sds-item optional"><div class="sds-num">13</div> Disposal Considerations</div>
+    <div class="sds-item optional"><div class="sds-num">14</div> Transport Info</div>
+    <div class="sds-item optional"><div class="sds-num">15</div> Regulatory Info</div>
+    <div class="sds-item"><div class="sds-num">16</div> Other Info / Date</div>
+  </div>
+  <p class="small anim anim-d4">Grayed sections (12&ndash;15) are non-mandatory but often included.</p>
+</div>
+
+<!-- ────── 14  SDS QUIZ ────── -->
+<div class="slide bg-purple" data-s="14">
+  <span class="tag anim">QUIZ TIME</span>
+  <h2 class="anim anim-d1">SDS Scavenger Hunt</h2>
+  <p class="subtitle anim anim-d2">Which section would you look in?</p>
+  <div class="score-badge" id="score2-badge">Score: 0 / 0</div>
+  <div class="quiz-wrap anim anim-d3" id="quiz2"></div>
+</div>
+
+<!-- ────── 15  TRAINING ────── -->
+<div class="slide bg-green" data-s="15">
+  <span class="tag green anim">PILLAR 3</span>
+  <h1 class="anim anim-d1">Employee Training</h1>
+  <p class="subtitle anim anim-d2">When and what to train on</p>
+  <div class="two-col anim anim-d3">
+    <div class="col">
+      <div class="callout green">
+        <p><b>When?</b></p>
+        <p>&bull; At <b>initial assignment</b></p>
+        <p>&bull; Whenever a <b>new chemical hazard</b> is introduced</p>
+        <p>&bull; Annual refresher (like <b>right now!</b>)</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="callout">
+        <p><b>Training must cover:</b></p>
+        <p>&bull; How to <b>detect</b> chemical presence/release</p>
+        <p>&bull; Physical &amp; health <b>hazards</b> in the work area</p>
+        <p>&bull; <b>Protective measures</b> &mdash; PPE, procedures, emergency actions</p>
+        <p>&bull; How to <b>read labels &amp; use SDS</b></p>
+      </div>
+    </div>
+  </div>
+  <div class="callout red anim anim-d4">
+    <p><b>Non-routine tasks:</b> Employees must also be informed of hazards associated with non-routine tasks and unlabeled pipes in their work areas.</p>
+  </div>
+</div>
+
+<!-- ────── 16  MULTI-EMPLOYER ────── -->
+<div class="slide bg-navy" data-s="16">
+  <h2 class="anim">Multi-Employer Workplaces</h2>
+  <p class="subtitle anim anim-d1">Special requirements when trades share a site</p>
+  <div class="card-row anim anim-d2">
+    <div class="card">
+      <div class="icon">&#128196;</div>
+      <h3>SDS Access</h3>
+      <p>Provide other employers on-site access to SDS for chemicals their employees may be exposed to</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#9888;&#65039;</div>
+      <h3>Precautions</h3>
+      <p>Inform other employers of precautionary measures for normal operations <b>and</b> foreseeable emergencies</p>
+    </div>
+    <div class="card">
+      <div class="icon">&#127991;&#65039;</div>
+      <h3>Labeling System</h3>
+      <p>Inform other employers of the labeling system used in the workplace</p>
+    </div>
+  </div>
+  <div class="funfact anim anim-d3">Construction sites are almost always multi-employer &mdash; this applies to us every day.</div>
+</div>
+
+<!-- ────── 17  WHAT'S NEW 2026 ────── -->
+<div class="slide bg-teal" data-s="17">
+  <span class="tag red anim">NEW FOR 2026</span>
+  <h1 class="anim anim-d1">HazCom Updates</h1>
+  <p class="subtitle anim anim-d2">OSHA HazCom 2024 Final Rule &mdash; aligning with GHS Revision 7</p>
+  <div class="update-list anim anim-d3">
+    <div class="update-item">
+      <h3>New Hazard Classifications</h3>
+      <p>Desensitized explosives and chemicals under pressure are now distinct categories. Aerosol reclassification is in effect.</p>
+    </div>
+    <div class="update-item">
+      <h3>Small Container Labeling</h3>
+      <p>New flexibility for containers &le;100 mL &mdash; fold-out labels, tags, and pull-out labels are now permitted.</p>
+    </div>
+    <div class="update-item">
+      <h3>Updated Classification Criteria</h3>
+      <p>Revised cut-off values for flammable gases, updated acute toxicity estimates, and new concentration limits for mixtures.</p>
+    </div>
+    <div class="update-item">
+      <h3>Compliance Timeline</h3>
+      <p><b>Chemical manufacturers &amp; importers:</b> Must update labels and SDS by July 2026. <b>Employers:</b> Workplace compliance by January 2027.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ────── 18  WHAT'S NEW (cont'd) ────── -->
+<div class="slide bg-teal" data-s="18">
+  <span class="tag red anim">NEW FOR 2026</span>
+  <h2 class="anim anim-d1">What This Means for Clark</h2>
+  <div class="card-row anim anim-d2">
+    <div class="card" style="border-left:4px solid #ef5350;">
+      <div class="icon">&#128269;</div>
+      <h3>Review Incoming SDS</h3>
+      <p>Watch for updated SDS from suppliers &mdash; new format elements and hazard categories may appear</p>
+    </div>
+    <div class="card" style="border-left:4px solid #ffa726;">
+      <div class="icon">&#127991;&#65039;</div>
+      <h3>Check New Labels</h3>
+      <p>Small container labels may look different &mdash; ensure your teams know the new formats</p>
+    </div>
+    <div class="card" style="border-left:4px solid #66bb6a;">
+      <div class="icon">&#128218;</div>
+      <h3>Update Training</h3>
+      <p>Incorporate GHS Rev 7 changes into orientation and refresher training materials</p>
+    </div>
+  </div>
+  <div class="callout anim anim-d3">
+    <p><b>Action item:</b> Safety Managers should start reviewing current SDS binders to identify any chemicals that may be reclassified under the new criteria.</p>
+  </div>
+</div>
+
+<!-- ────── 19  GENERAL QUIZ ────── -->
+<div class="slide bg-purple" data-s="19">
+  <span class="tag anim">FINAL QUIZ</span>
+  <h2 class="anim anim-d1">Knowledge Check</h2>
+  <p class="subtitle anim anim-d2">Let's see what you retained!</p>
+  <div class="score-badge" id="score3-badge">Score: 0 / 0</div>
+  <div class="quiz-wrap anim anim-d3" id="quiz3"></div>
+</div>
+
+<!-- ────── 20  SCORE ────── -->
+<div class="slide bg-charcoal" data-s="20">
+  <h1 class="anim">Your Final Score</h1>
+  <div class="score-ring anim anim-d1">
+    <div class="big-score" id="final-score">--</div>
+  </div>
+  <p class="subtitle anim anim-d2" id="final-msg"></p>
+  <div class="funfact anim anim-d3" id="final-detail"></div>
+</div>
+
+<!-- ────── 21  TAKEAWAYS ────── -->
+<div class="slide bg-blue" data-s="21">
+  <h1 class="anim">Key Takeaways</h1>
+  <div style="width:100%;max-width:750px;">
+    <div class="callout anim anim-d1">
+      <p><b>1.</b> HazCom stands on <b>3 pillars</b>: Labels, SDS, and Training &mdash; all three are required.</p>
+    </div>
+    <div class="callout blue anim anim-d2">
+      <p><b>2.</b> Every container must be labeled. Every chemical needs an SDS. Every employee needs training.</p>
+    </div>
+    <div class="callout green anim anim-d3">
+      <p><b>3.</b> Know the <b>8 GHS pictograms</b> and the two signal words (DANGER / WARNING).</p>
+    </div>
+    <div class="callout red anim anim-d4">
+      <p><b>4.</b> <b>2026 updates</b> are here &mdash; watch for new SDS formats, revised labels, and updated hazard classes.</p>
+    </div>
+    <div class="callout anim anim-d5">
+      <p><b>5.</b> As management, <b>you are the enforcement layer</b>. Set the standard and hold the line.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ────── 22  QUESTIONS ────── -->
+<div class="slide bg-dark" data-s="22">
+  <div style="font-size:64px;" class="anim">&#128172;</div>
+  <h1 class="anim anim-d1">Questions &amp; Discussion</h1>
+  <p class="subtitle anim anim-d2">Open floor &mdash; let's talk about it</p>
+  <div class="card-row anim anim-d3">
+    <div class="card">
+      <h3>Site-Specific Concerns?</h3>
+      <p>Any chemicals on your current projects that need attention?</p>
+    </div>
+    <div class="card">
+      <h3>SDS Binder Status?</h3>
+      <p>When was the last time your project's binder was audited?</p>
+    </div>
+    <div class="card">
+      <h3>Training Gaps?</h3>
+      <p>Any new hires or trades that need HazCom orientation?</p>
+    </div>
+  </div>
+</div>
+
+<!-- ────── 23  THANK YOU ────── -->
+<div class="slide bg-navy" data-s="23">
+  <div style="font-size:48px;" class="anim">&#9989;</div>
+  <h1 class="anim anim-d1">Thank You!</h1>
+  <p class="subtitle anim anim-d2">Stay safe. Stay informed. Stay compliant.</p>
+  <div class="callout anim anim-d3" style="text-align:center;">
+    <p><b>Clark Foundations HazCom Program</b></p>
+    <p style="margin-top:6px;">Full policy document available from your Project Safety Manager</p>
+    <p style="margin-top:6px;">OSHA HazCom Standard: <b>29 CFR 1910.1200</b></p>
+  </div>
+  <p class="small anim anim-d4">Annual HazCom Refresher &mdash; Clark Foundations &mdash; 2026</p>
+</div>
+
+</div><!-- /deck -->
+
+<!-- ═══════════════════ BOTTOM NAV BAR ═══════════════════ -->
+<div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+<div class="nav-bar">
+  <button id="btn-prev" onclick="go(-1)">&larr; Prev</button>
+  <div class="nav-center">
+    <span class="slide-counter" id="counter">1 / 23</span>
+    <span class="timer" id="timer">00:00</span>
+  </div>
+  <button id="btn-next" onclick="go(1)">Next &rarr;</button>
+</div>
+
+<!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+<script>
+// ─── Slide Navigation ───
+var slides = document.querySelectorAll('.slide');
+var total = slides.length;
+var cur = 0;
+
+function showSlide(n, dir) {
+  if (n < 0 || n >= total) return;
+  var prev = slides[cur];
+  prev.classList.remove('active');
+  prev.classList.add(dir > 0 ? 'exit-left' : '');
+  setTimeout(function() { prev.classList.remove('exit-left'); }, 500);
+  cur = n;
+  var next = slides[cur];
+  next.style.transform = dir > 0 ? 'translateX(40px)' : 'translateX(-40px)';
+  void next.offsetWidth;
+  next.classList.add('active');
+  document.getElementById('counter').textContent = (cur + 1) + ' / ' + total;
+  document.getElementById('progress').style.width = ((cur + 1) / total * 100) + '%';
+  document.getElementById('btn-prev').disabled = cur === 0;
+  document.getElementById('btn-next').disabled = cur === total - 1;
+}
+
+function go(dir) { showSlide(cur + dir, dir); }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+});
+
+// Init
+document.getElementById('btn-prev').disabled = true;
+
+// ─── Timer ───
+var _startTime = Date.now();
+setInterval(function() {
+  var s = Math.floor((Date.now() - _startTime) / 1000);
+  var m = Math.floor(s / 60);
+  s = s % 60;
+  document.getElementById('timer').textContent =
+    (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}, 1000);
+
+// ─── Quiz Engine ───
+var _totalCorrect = 0;
+var _totalAsked = 0;
+
+function buildQuiz(containerId, badgeId, questions) {
+  var wrap = document.getElementById(containerId);
+  var badge = document.getElementById(badgeId);
+  var idx = 0;
+  var localCorrect = 0;
+
+  function render() {
+    if (idx >= questions.length) {
+      wrap.innerHTML =
+        '<div class="quiz-q">All done! You got <span class="accent">' + localCorrect +
+        ' / ' + questions.length + '</span> correct.</div>';
+      badge.textContent = 'Score: ' + localCorrect + ' / ' + questions.length;
+      return;
     }
-    document.addEventListener('click', unlockAudio, { once: false });
-    document.addEventListener('touchstart', unlockAudio, { once: false });
-
-    function playSoundFromDataUrl(dataUrl) {
-      try {
-        var ctx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-        var base64 = dataUrl.split(',')[1];
-        var binary = atob(base64);
-        var bytes = new Uint8Array(binary.length);
-        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        ctx.decodeAudioData(bytes.buffer, function(audioBuffer) {
-          var source = ctx.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(ctx.destination);
-          source.start(0);
-        });
-      } catch(e) {}
+    var q = questions[idx];
+    var html = '<div class="quiz-q">' + q.q + '</div><div class="quiz-opts">';
+    var letters = ['A', 'B', 'C', 'D'];
+    for (var i = 0; i < q.opts.length; i++) {
+      html += '<div class="quiz-opt" data-i="' + i + '" data-correct="' + q.correct + '" onclick="pickAnswer(this,\'' + containerId + '\',\'' + badgeId + '\')">' +
+        '<span class="opt-letter">' + letters[i] + '</span>' + q.opts[i] + '</div>';
     }
+    html += '</div><div class="quiz-feedback" id="' + containerId + '-fb"></div>';
+    html += '<div class="quiz-nav"><button id="' + containerId + '-next" onclick="quizzes[\'' + containerId + '\'].advance()">Next Question &rarr;</button></div>';
+    wrap.innerHTML = html;
+    badge.textContent = 'Score: ' + localCorrect + ' / ' + (idx) + (idx < questions.length ? '+' : '');
+  }
 
-    // Pre-load sound file from same-origin into localStorage
-    function cacheSound(url, key) {
-      if (localStorage.getItem(key)) return;
-      fetch(url).then(function(res) { return res.blob(); }).then(function(blob) {
-        var reader = new FileReader();
-        reader.onloadend = function() { localStorage.setItem(key, reader.result); };
-        reader.readAsDataURL(blob);
-      }).catch(function() {});
-    }
-    cacheSound('sounds/Website_Ready_Voice_1.mp3', 'web-sound-data');
+  render();
 
-    // Show splash + play sound on update-triggered reloads
-    if (sessionStorage.getItem('web-pending-reload')) {
-      sessionStorage.removeItem('web-pending-reload');
-      if (navigator.vibrate) navigator.vibrate(200);
-      var splash = document.getElementById('splash-green');
-      var soundData = localStorage.getItem('web-sound-data');
-      if (soundData) playSoundFromDataUrl(soundData);
-      if (splash) {
-        splash.style.display = 'flex';
-        setTimeout(function() {
-          splash.style.opacity = '0';
-          setTimeout(function() { splash.style.display = 'none'; }, 300);
-        }, 1000);
-      }
-    }
+  return {
+    advance: function() { idx++; render(); },
+    addCorrect: function() { localCorrect++; _totalCorrect++; },
+    addAsked: function() { _totalAsked++; }
+  };
+}
 
-    // Auto-refresh: poll own HTML every 10s for build-version changes
-    (function() {
-      var POLL_INTERVAL = 10000;
-      var currentVersion = (document.querySelector('meta[name="build-version"]') || {}).content;
-      if (!currentVersion) return;
-      if (!AUTO_REFRESH) return;
+var quizzes = {};
 
-      var indicator = document.createElement('div');
-      indicator.id = 'version-indicator';
-      indicator.innerHTML = '<span class="dot"></span><span class="label">v' + currentVersion + '</span>';
-      if (SHOW_WEB_VERSION) document.body.appendChild(indicator);
-      var dot = indicator.querySelector('.dot');
+function pickAnswer(el, cId, bId) {
+  var opts = el.parentNode.querySelectorAll('.quiz-opt');
+  for (var i = 0; i < opts.length; i++) opts[i].classList.add('locked');
+  var correctIdx = parseInt(el.getAttribute('data-correct'));
+  var myIdx = parseInt(el.getAttribute('data-i'));
+  var fb = document.getElementById(cId + '-fb');
+  var nxt = document.getElementById(cId + '-next');
 
-      function checkForUpdate() {
-        dot.className = 'dot checking';
-        fetch(window.location.href.split('?')[0] + '?_cb=' + Date.now(), { cache: 'no-store' })
-          .then(function(res) { return res.text(); })
-          .then(function(html) {
-            var match = html.match(/<meta\s+name="build-version"\s+content="([^"]+)"/);
-            if (match && match[1] !== currentVersion) {
-              dot.className = 'dot found';
-              indicator.querySelector('.label').textContent = 'Updating...';
-              sessionStorage.setItem('web-pending-reload', '1');
-              setTimeout(function() { window.location.reload(); }, 2000);
-            } else {
-              setTimeout(function() { dot.className = 'dot'; }, 800);
-              setTimeout(checkForUpdate, POLL_INTERVAL);
-            }
-          })
-          .catch(function() {
-            dot.className = 'dot error';
-            setTimeout(function() { dot.className = 'dot'; }, 2000);
-            setTimeout(checkForUpdate, POLL_INTERVAL);
-          });
-      }
-      setTimeout(checkForUpdate, POLL_INTERVAL);
-    })();
+  quizzes[cId].addAsked();
 
-    // Screen Wake Lock — keep screen on while page is visible
-    var _wakeLock = null;
-    async function requestWakeLock() {
-      try {
-        if (navigator.wakeLock) {
-          _wakeLock = await navigator.wakeLock.request('screen');
-          _wakeLock.addEventListener('release', function() { _wakeLock = null; });
+  if (myIdx === correctIdx) {
+    el.classList.add('correct');
+    fb.innerHTML = '<span class="accent-g">Correct!</span>';
+    quizzes[cId].addCorrect();
+  } else {
+    el.classList.add('wrong');
+    opts[correctIdx].classList.add('correct');
+    fb.innerHTML = '<span class="accent-r">Not quite!</span> The correct answer is highlighted.';
+  }
+  nxt.classList.add('show');
+  document.getElementById(bId).textContent = 'Score: ' + _totalCorrect + ' / ' + _totalAsked;
+}
+
+// ─── Quiz 1: Pictogram Challenge ───
+quizzes['quiz1'] = buildQuiz('quiz1', 'score1-badge', [
+  { q: 'Which pictogram represents <b>oxidizers</b>?',
+    opts: ['Flame', 'Flame Over Circle', 'Exploding Bomb', 'Gas Cylinder'], correct: 1 },
+  { q: 'The <b>Skull &amp; Crossbones</b> pictogram indicates:',
+    opts: ['Irritant (mild)', 'Environmental hazard', 'Acute toxicity (severe/fatal)', 'Corrosive to metals'], correct: 2 },
+  { q: 'You see the <b>Health Hazard</b> pictogram (silhouette with star on chest). This warns of:',
+    opts: ['Skin irritation only', 'Carcinogen, organ toxicity, mutagenicity', 'Flammable solid', 'Gases under pressure'], correct: 1 },
+  { q: 'Which pictogram would you find on a container of <b>compressed nitrogen gas</b>?',
+    opts: ['Flame', 'Exclamation Mark', 'Skull &amp; Crossbones', 'Gas Cylinder'], correct: 3 }
+]);
+
+// ─── Quiz 2: SDS Scavenger Hunt ───
+quizzes['quiz2'] = buildQuiz('quiz2', 'score2-badge', [
+  { q: 'Your employee got a chemical splash in the eye. Which SDS section has <b>first-aid measures</b>?',
+    opts: ['Section 2', 'Section 4', 'Section 8', 'Section 11'], correct: 1 },
+  { q: 'You need to know what <b>PPE</b> to wear. Which section covers <b>exposure controls / personal protection</b>?',
+    opts: ['Section 5', 'Section 7', 'Section 8', 'Section 9'], correct: 2 },
+  { q: 'A fire breaks out involving a chemical. <b>Fire-fighting measures</b> are in which section?',
+    opts: ['Section 3', 'Section 5', 'Section 6', 'Section 10'], correct: 1 },
+  { q: 'You need to check if a chemical is a <b>known carcinogen</b>. Which section?',
+    opts: ['Section 2', 'Section 8', 'Section 11', 'Section 15'], correct: 2 }
+]);
+
+// ─── Quiz 3: General Knowledge ───
+quizzes['quiz3'] = buildQuiz('quiz3', 'score3-badge', [
+  { q: 'How many <b>required elements</b> must appear on a GHS label?',
+    opts: ['4', '5', '6', '8'], correct: 2 },
+  { q: 'Under Clark\'s policy, who has <b>overall responsibility</b> for HazCom compliance on a project?',
+    opts: ['Project Safety Manager', 'Project Superintendent', 'VP of Safety', 'Site Foreman'], correct: 1 },
+  { q: 'Which signal word indicates a <b>more severe</b> hazard?',
+    opts: ['CAUTION', 'WARNING', 'DANGER', 'NOTICE'], correct: 2 },
+  { q: 'SDS Sections <b>12 through 15</b> are:',
+    opts: ['Mandatory', 'Non-mandatory (optional)', 'Only required for carcinogens', 'Removed under GHS Rev 7'], correct: 1 },
+  { q: 'When must HazCom training be provided? (Select the best answer)',
+    opts: ['Only during annual refresher', 'At initial assignment and when new hazards are introduced', 'Only when OSHA inspects', 'Only for supervisors'], correct: 1 }
+]);
+
+// ─── Final Score Calculation (on slide 20) ───
+var _scoreObserver = new MutationObserver(function() {
+  var scoreSlide = slides[19]; // slide 20 (0-indexed)
+  if (scoreSlide.classList.contains('active')) {
+    var pct = _totalAsked > 0 ? Math.round((_totalCorrect / _totalAsked) * 100) : 0;
+    document.getElementById('final-score').textContent = pct + '%';
+    document.getElementById('final-detail').textContent =
+      _totalCorrect + ' correct out of ' + _totalAsked + ' questions across all quizzes';
+    var msg = '';
+    if (pct === 100) msg = 'Perfect score! You\'re a HazCom expert!';
+    else if (pct >= 80) msg = 'Great job! Solid HazCom knowledge.';
+    else if (pct >= 60) msg = 'Good effort! A few areas to brush up on.';
+    else msg = 'Let\'s review the material together — knowledge saves lives.';
+    document.getElementById('final-msg').textContent = msg;
+  }
+});
+for (var i = 0; i < slides.length; i++) {
+  _scoreObserver.observe(slides[i], { attributes: true, attributeFilter: ['class'] });
+}
+
+// ─── Auto-refresh: build-version polling ───
+var AUTO_REFRESH = true;
+var SHOW_WEB_VERSION = true;
+
+(function() {
+  var POLL_INTERVAL = 10000;
+  var currentVersion = (document.querySelector('meta[name="build-version"]') || {}).content;
+  if (!currentVersion || !AUTO_REFRESH) return;
+
+  var indicator = document.createElement('div');
+  indicator.id = 'version-indicator';
+  indicator.innerHTML = '<span class="dot"></span><span class="label">v' + currentVersion + '</span>';
+  if (SHOW_WEB_VERSION) document.body.appendChild(indicator);
+  var dot = indicator.querySelector('.dot');
+
+  function checkForUpdate() {
+    dot.className = 'dot checking';
+    fetch(window.location.href.split('?')[0] + '?_cb=' + Date.now(), { cache: 'no-store' })
+      .then(function(res) { return res.text(); })
+      .then(function(html) {
+        var match = html.match(/<meta\s+name="build-version"\s+content="([^"]+)"/);
+        if (match && match[1] !== currentVersion) {
+          dot.className = 'dot found';
+          indicator.querySelector('.label').textContent = 'Updating...';
+          sessionStorage.setItem('web-pending-reload', '1');
+          setTimeout(function() { window.location.reload(); }, 2000);
+        } else {
+          setTimeout(function() { dot.className = 'dot'; }, 800);
+          setTimeout(checkForUpdate, POLL_INTERVAL);
         }
-      } catch(e) {}
+      })
+      .catch(function() {
+        dot.className = 'dot error';
+        setTimeout(function() { dot.className = 'dot'; }, 2000);
+        setTimeout(checkForUpdate, POLL_INTERVAL);
+      });
+  }
+  setTimeout(checkForUpdate, POLL_INTERVAL);
+})();
+
+// ─── Splash on reload ───
+if (sessionStorage.getItem('web-pending-reload')) {
+  sessionStorage.removeItem('web-pending-reload');
+  var splash = document.getElementById('splash-green');
+  if (splash) {
+    splash.style.display = 'flex';
+    setTimeout(function() {
+      splash.style.opacity = '0';
+      setTimeout(function() { splash.style.display = 'none'; }, 300);
+    }, 1000);
+  }
+}
+
+// ─── Screen Wake Lock ───
+var _wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if (navigator.wakeLock) {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLock.addEventListener('release', function() { _wakeLock = null; });
     }
-    requestWakeLock();
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') requestWakeLock();
-    });
-  </script>
+  } catch(e) {}
+}
+requestWakeLock();
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+</script>
 </body>
 </html>
