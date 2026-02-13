@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="build-version" content="01.02w">
+  <meta name="build-version" content="01.03w">
   <title>HazCom Annual Refresher 2026 — Clark Foundations</title>
   <style>
     /* ─── Reset & Base ─── */
@@ -44,9 +44,9 @@
 
     /* ─── Slide Deck ─── */
     #deck { width: 100%; height: 100%; overflow: hidden; position: relative; }
-    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 60px 80px; opacity: 0; transform: translateX(60px); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; overflow-y: auto; }
+    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 60px 80px; opacity: 0; transform: translateX(60px); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; overflow-y: auto; }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
-    .slide-inner { max-width: 1100px; width: 100%; }
+    .slide-inner { max-width: 1100px; width: 100%; margin: auto 0; }
 
     /* ─── Section Number Watermark ─── */
     .section-num { font: 800 clamp(60px, 10vw, 120px)/1 sans-serif; color: rgba(33,150,243,0.06); position: absolute; top: 40px; left: 60px; user-select: none; pointer-events: none; }
@@ -581,12 +581,14 @@
   <div class="slide-inner">
     <h2>What's New for <span>2026</span></h2>
     <div class="accent-line"></div>
-    <p>OSHA HazCom 2024 Final Rule &mdash; aligning with GHS Revision 7</p>
-    <div class="update-list">
+    <div class="callout danger">
+      <p><strong>This is federal law, not optional.</strong> OSHA published the HazCom 2024 Final Rule aligning 29 CFR 1910.1200 with GHS Revision 7. Clark's current policy (May 2016) was written under GHS Rev 3 &mdash; <strong>we are legally required to update our program</strong> to meet the new requirements by the compliance deadlines.</p>
+    </div>
+    <div class="update-list" style="margin-top:20px;">
       <div class="update-item"><h3>New Hazard Classifications</h3><p>Desensitized explosives and chemicals under pressure are now distinct categories. Aerosol reclassification is in effect.</p></div>
       <div class="update-item"><h3>Small Container Labeling</h3><p>New flexibility for containers &le;100 mL &mdash; fold-out labels, tags, and pull-out labels are now permitted.</p></div>
       <div class="update-item"><h3>Updated Classification Criteria</h3><p>Revised cut-off values for flammable gases, updated acute toxicity estimates, and new concentration limits for mixtures.</p></div>
-      <div class="update-item"><h3>Compliance Timeline</h3><p><strong>Manufacturers &amp; importers:</strong> Must update labels and SDS by July 2026. <strong>Employers:</strong> Workplace compliance by January 2027.</p></div>
+      <div class="update-item"><h3>Compliance Deadlines</h3><p><strong>Manufacturers &amp; importers:</strong> Must update labels and SDS by July 2026. <strong>Employers (that's us):</strong> Full workplace compliance by January 2027.</p></div>
     </div>
   </div>
 </div>
@@ -594,15 +596,16 @@
 <!-- 17: WHAT THIS MEANS -->
 <div class="slide">
   <div class="slide-inner">
-    <h2>What This Means for <span>Clark</span></h2>
+    <h2>Clark Must <span>Update</span></h2>
     <div class="accent-line"></div>
-    <div class="takeaway-grid">
-      <div class="takeaway-card"><div class="takeaway-icon">&#128269;</div><h3>Review Incoming SDS</h3><p>Watch for updated SDS from suppliers with new format elements and hazard categories</p></div>
-      <div class="takeaway-card"><div class="takeaway-icon">&#127991;&#65039;</div><h3>Check New Labels</h3><p>Small container labels may look different &mdash; ensure your teams know the new formats</p></div>
-      <div class="takeaway-card"><div class="takeaway-icon">&#128218;</div><h3>Update Training</h3><p>Incorporate GHS Rev 7 changes into orientation and refresher training materials</p></div>
+    <p>Clark's written HazCom policy needs to be revised to reflect the OSHA 2024 changes. Here's what that looks like in practice:</p>
+    <div class="takeaway-grid" style="margin-top:16px;">
+      <div class="takeaway-card"><div class="takeaway-icon">&#128269;</div><h3>Review Incoming SDS</h3><p>Suppliers will send updated SDS with new hazard categories &mdash; our binders must reflect the current versions</p></div>
+      <div class="takeaway-card"><div class="takeaway-icon">&#127991;&#65039;</div><h3>Verify Labels</h3><p>New small-container label formats are coming &mdash; train teams to recognize them as compliant</p></div>
+      <div class="takeaway-card"><div class="takeaway-icon">&#128218;</div><h3>Revise Training Materials</h3><p>Orientation and refresher content must be updated to cover the new hazard classes and label formats</p></div>
     </div>
-    <div class="callout" style="margin-top:24px;">
-      <p><strong>Action item:</strong> Safety Managers should start reviewing current SDS binders to identify chemicals that may be reclassified under the new criteria.</p>
+    <div class="callout warn" style="margin-top:20px;">
+      <p><strong>Deadline reminder:</strong> Clark must be in full compliance by <strong>January 2027</strong>. Safety Managers should begin auditing SDS binders now to identify chemicals that may be reclassified under the new criteria.</p>
     </div>
   </div>
 </div>
