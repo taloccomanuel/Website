@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- skull -->
+  <path d="M50 5C30 5 18 20 18 36C18 46 22 54 30 58L26 68H74L70 58C78 54 82 46 82 36C82 20 70 5 50 5Z" fill="#e0e0e0"/>
+  <rect x="32" y="62" width="36" height="10" rx="2" fill="#e0e0e0"/>
+  <!-- eye sockets -->
+  <ellipse cx="37" cy="32" rx="8" ry="9" fill="#0a0a1a"/>
+  <ellipse cx="63" cy="32" rx="8" ry="9" fill="#0a0a1a"/>
+  <!-- nose -->
+  <path d="M46 46L50 52L54 46Z" fill="#0a0a1a"/>
+  <!-- teeth gaps -->
+  <rect x="41" y="62" width="3" height="10" fill="#0a0a1a"/>
+  <rect x="49" y="62" width="3" height="10" fill="#0a0a1a"/>
+  <rect x="57" y="62" width="3" height="10" fill="#0a0a1a"/>
+  <!-- crossbones -->
+  <line x1="15" y1="78" x2="85" y2="98" stroke="#e0e0e0" stroke-width="9" stroke-linecap="round"/>
+  <line x1="85" y1="78" x2="15" y2="98" stroke="#e0e0e0" stroke-width="9" stroke-linecap="round"/>
+</svg>
