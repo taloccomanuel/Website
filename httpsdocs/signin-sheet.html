@@ -104,7 +104,6 @@
   <span class="topbar-brand">Toolbox Talk Sign-In</span>
   <div class="topbar-actions">
     <button class="btn-ghost" onclick="clearAll()">Clear all</button>
-    <button class="btn-solid" onclick="openModal()">Save / Export ↓</button>
   </div>
 </div>
 
@@ -147,20 +146,14 @@
     </div>
 
   </div>
+
+  <div style="display:flex; justify-content:center; margin-top:28px;">
+    <button onclick="sendToSheets()" id="save-btn" style="font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; padding:12px 48px; background:#1a7340; color:#fff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(26,115,64,0.25); transition:opacity 0.15s;">Save</button>
+  </div>
+  <div id="submit-status-bottom" class="submit-status" style="margin-top:14px; text-align:center;"></div>
 </div>
 
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <h2>Save &amp; Export</h2>
-    <p>Send the attendance list to Google Sheets, download an HTML copy, or do both.</p>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-      <button class="modal-btn btn-export" onclick="doExport()">Download HTML</button>
-      <button class="modal-btn btn-sheets" id="sheets-btn" onclick="sendToSheets()">Send to Google Sheets</button>
-    </div>
-    <div class="submit-status" id="submit-status"></div>
-  </div>
-</div>
+
 
 <div class="toast" id="toast"></div>
 
@@ -246,20 +239,6 @@
     showToast('Sheet cleared');
   }
 
-  function openModal() {
-    const status = document.getElementById('submit-status');
-    status.className = 'submit-status';
-    status.textContent = '';
-    const btn = document.getElementById('sheets-btn');
-    btn.disabled = false;
-    btn.textContent = 'Send to Google Sheets';
-    document.getElementById('modal').classList.add('open');
-  }
-
-  function closeModal() {
-    document.getElementById('modal').classList.remove('open');
-  }
-
   async function sendToSheets() {
     const names = getFilledNames();
     if (!names.length) {
@@ -336,10 +315,6 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2400);
   }
-
-  document.getElementById('modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal')) closeModal();
-  });
 
   addRow(false); addRow(false); addRow(false);
 </script>
