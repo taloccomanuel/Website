@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Toolbox Talk Sign-In Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1a18; --ink-muted: #6b6b65; --ink-faint: #b0afa8;
+    --paper: #f7f5f0; --paper-mid: #eeecea; --paper-dark: #e2dfda;
+    --accent: #1e3a6e; --line: rgba(26,26,24,0.12);
+    --radius: 6px; --shadow: 0 2px 12px rgba(26,26,24,0.08), 0 1px 3px rgba(26,26,24,0.06);
+  }
+  html { background: var(--paper); min-height: 100%; }
+  body { font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--paper); min-height: 100vh; }
+
+  .topbar { background: var(--accent); color: #fff; padding: 0 32px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .topbar-brand { font-family: 'DM Serif Display', serif; font-size: 17px; color: #fff; opacity: 0.9; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-ghost { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 16px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.22); }
+  .btn-solid { background: #fff; border: none; color: var(--accent); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 6px 18px; border-radius: var(--radius); cursor: pointer; transition: opacity 0.15s; }
+  .btn-solid:hover { opacity: 0.88; }
+
+  .page { max-width: 700px; margin: 0 auto; padding: 40px 24px 80px; }
+  .sheet { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; animation: rise 0.4s ease both; }
+  @keyframes rise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: none; } }
+
+  .logo-area { display: flex; justify-content: center; align-items: center; padding: 28px 32px 20px; border-bottom: 1px solid var(--line); background: #fff; }
+  .logo-placeholder { width: 220px; height: 72px; border: 2px dashed var(--paper-dark); border-radius: var(--radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden; }
+  .logo-placeholder:hover { border-color: var(--ink-faint); background: var(--paper); }
+  .logo-placeholder input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .logo-placeholder .logo-icon { font-size: 22px; color: var(--ink-faint); line-height: 1; }
+  .logo-placeholder .logo-text { font-size: 11px; color: var(--ink-faint); letter-spacing: 0.04em; }
+  .logo-placeholder img { width: 100%; height: 100%; object-fit: contain; display: none; }
+  .logo-placeholder.has-logo .logo-icon, .logo-placeholder.has-logo .logo-text { display: none; }
+  .logo-placeholder.has-logo img { display: block; }
+
+  .sheet-header { padding: 20px 32px 20px; border-bottom: 1px solid var(--line); background: #fff; }
+  .toolbox-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  .header-left { flex: 1; }
+  .field-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 5px; }
+  .topic-input { font-family: 'DM Serif Display', serif; font-size: 24px; border: none; outline: none; color: var(--ink); background: transparent; width: 100%; border-bottom: 1.5px solid transparent; padding-bottom: 2px; transition: border-color 0.2s; }
+  .topic-input:focus { border-bottom-color: var(--accent); }
+  .topic-input::placeholder { color: var(--ink-faint); }
+  .header-right { flex-shrink: 0; text-align: right; }
+  .date-input { font-family: 'DM Sans', sans-serif; font-size: 14px; border: none; outline: none; color: var(--ink-muted); background: transparent; text-align: right; cursor: pointer; }
+  .date-input:focus { color: var(--ink); }
+
+  .table-head { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; padding: 10px 32px; background: var(--paper-mid); border-bottom: 1px solid var(--line); }
+  .col-label { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-muted); }
+  .entries { padding: 0 32px; }
+  .entry-row { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); animation: fadeIn 0.18s ease both; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .entry-row:last-child { border-bottom: none; }
+  .row-num { font-size: 12px; color: var(--ink-faint); font-weight: 300; text-align: center; }
+  .name-input { font-family: 'DM Sans', sans-serif; font-size: 15px; border: none; border-bottom: 1px solid var(--paper-dark); outline: none; background: transparent; color: var(--ink); padding: 4px 0; width: 100%; transition: border-color 0.2s; }
+  .name-input:focus { border-bottom-color: var(--accent); }
+  .name-input::placeholder { color: var(--ink-faint); }
+  .remove-btn { background: none; border: none; cursor: pointer; color: var(--ink-faint); font-size: 18px; line-height: 1; padding: 0; text-align: center; transition: color 0.15s; }
+  .remove-btn:hover { color: #c0392b; }
+
+  .sheet-footer { padding: 14px 32px; background: var(--paper-mid); border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+  .count-text { font-size: 12px; color: var(--ink-muted); font-weight: 300; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,26,24,0.45); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 10px; padding: 28px 28px 24px; width: 410px; box-shadow: 0 8px 40px rgba(26,26,24,0.18); animation: rise 0.25s ease both; }
+  .modal h2 { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--ink-muted); margin-bottom: 20px; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .modal-cancel { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 7px 16px; border: 1px solid var(--paper-dark); background: none; border-radius: var(--radius); cursor: pointer; color: var(--ink-muted); }
+  .modal-cancel:hover { background: var(--paper-mid); }
+  .modal-btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 18px; border: none; border-radius: var(--radius); cursor: pointer; color: #fff; transition: opacity 0.15s; }
+  .modal-btn:hover:not(:disabled) { opacity: 0.88; }
+  .modal-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-export { background: var(--accent); }
+  .btn-sheets { background: #1a7340; }
+  .submit-status { font-size: 13px; margin-top: 14px; padding: 10px 14px; border-radius: var(--radius); display: none; line-height: 1.5; }
+  .submit-status.ok { background: #e8f5ee; color: #1a7340; display: block; }
+  .submit-status.err { background: #fdecea; color: #b03030; display: block; }
+  .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; font-size: 13px; padding: 10px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; z-index: 300; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 560px) {
+    .page { padding: 20px 10px 60px; }
+    .sheet-header, .logo-area { padding-left: 18px; padding-right: 18px; }
+    .table-head, .entries, .sheet-footer { padding-left: 18px; padding-right: 18px; }
+    .topbar { padding: 0 16px; }
+    .topic-input { font-size: 20px; }
+    .modal { width: 94vw; padding: 22px 18px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-brand">Toolbox Talk Sign-In</span>
+  <div class="topbar-actions">
+    <button class="btn-ghost" onclick="clearAll()">Clear all</button>
+    <button class="btn-solid" onclick="openModal()">Save / Export ↓</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="sheet">
+
+    <div class="logo-area">
+      <div class="logo-placeholder" id="logo-box" title="Click to upload logo">
+        <input type="file" accept="image/*" onchange="loadLogo(event)" />
+        <div class="logo-icon">🖼</div>
+        <div class="logo-text">Click to upload logo</div>
+        <img id="logo-img" src="" alt="Logo" />
+      </div>
+    </div>
+
+    <div class="sheet-header">
+      <div class="toolbox-label">Toolbox Talk</div>
+      <div class="header-row">
+        <div class="header-left">
+          <div class="field-label">Topic</div>
+          <input class="topic-input" id="topic" type="text" placeholder="Enter topic…" />
+        </div>
+        <div class="header-right">
+          <div class="field-label">Date</div>
+          <input class="date-input" id="sheet-date" type="date" />
+        </div>
+      </div>
+    </div>
+
+    <div class="table-head">
+      <div class="col-label">#</div>
+      <div class="col-label">Name</div>
+      <div></div>
+    </div>
+
+    <div class="entries" id="entries"></div>
+
+    <div class="sheet-footer">
+      <span class="count-text" id="count">0 attendees</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Save &amp; Export</h2>
+    <p>Send the attendance list to Google Sheets, download an HTML copy, or do both.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn btn-export" onclick="doExport()">Download HTML</button>
+      <button class="modal-btn btn-sheets" id="sheets-btn" onclick="sendToSheets()">Send to Google Sheets</button>
+    </div>
+    <div class="submit-status" id="submit-status"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SHEETS_URL = "https://script.google.com/macros/s/AKfycbyaTG137tcJUigFikTtHTJt2j3IXmKvvWnwn8_y9eqr9PKb5AYCzPU6hkjyGjMFrNZD/exec";
+
+  let rows = [], rid = 0, logoDataUrl = '';
+
+  document.getElementById('sheet-date').value = new Date().toISOString().split('T')[0];
+
+  function loadLogo(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      logoDataUrl = ev.target.result;
+      document.getElementById('logo-img').src = logoDataUrl;
+      document.getElementById('logo-box').classList.add('has-logo');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function hasBlankRow() {
+    return rows.some(id => !(document.getElementById('name-' + id)?.value || '').trim());
+  }
+
+  function addRow(focus) {
+    const id = ++rid;
+    rows.push(id);
+    const el = document.createElement('div');
+    el.className = 'entry-row';
+    el.id = 'row-' + id;
+    el.innerHTML = `
+      <div class="row-num" id="num-${id}"></div>
+      <input class="name-input" id="name-${id}" type="text" placeholder="Full name" autocomplete="off"
+        oninput="onNameInput(${id})" />
+      <button class="remove-btn" onclick="removeRow(${id})" title="Remove">&#215;</button>
+    `;
+    document.getElementById('entries').appendChild(el);
+    reNumber();
+    updateCount();
+    if (focus) setTimeout(() => document.getElementById('name-' + id)?.focus(), 50);
+  }
+
+  function onNameInput(id) {
+    updateCount();
+    const val = (document.getElementById('name-' + id)?.value || '').trim();
+    if (val && !hasBlankRow()) addRow(false);
+  }
+
+  function removeRow(id) {
+    document.getElementById('row-' + id)?.remove();
+    rows = rows.filter(r => r !== id);
+    reNumber();
+    updateCount();
+    if (!hasBlankRow()) addRow(false);
+  }
+
+  function reNumber() {
+    rows.forEach((id, i) => {
+      const el = document.getElementById('num-' + id);
+      if (el) el.textContent = i + 1;
+    });
+  }
+
+  function updateCount() {
+    const n = rows.filter(id => (document.getElementById('name-' + id)?.value || '').trim()).length;
+    document.getElementById('count').textContent = n + (n === 1 ? ' attendee' : ' attendees');
+  }
+
+  function getFilledNames() {
+    return rows
+      .map(id => (document.getElementById('name-' + id)?.value || '').trim())
+      .filter(Boolean);
+  }
+
+  function clearAll() {
+    if (!confirm('Clear all entries?')) return;
+    document.getElementById('entries').innerHTML = '';
+    rows = []; rid = 0;
+    addRow(false); addRow(false); addRow(false);
+    updateCount();
+    showToast('Sheet cleared');
+  }
+
+  function openModal() {
+    const status = document.getElementById('submit-status');
+    status.className = 'submit-status';
+    status.textContent = '';
+    const btn = document.getElementById('sheets-btn');
+    btn.disabled = false;
+    btn.textContent = 'Send to Google Sheets';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  async function sendToSheets() {
+    const names = getFilledNames();
+    if (!names.length) {
+      showStatus('err', 'No names to send. Please add at least one attendee.');
+      return;
+    }
+    const topic = document.getElementById('topic').value.trim() || 'Untitled';
+    const date  = document.getElementById('sheet-date').value;
+    const btn   = document.getElementById('sheets-btn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Sending\u2026';
+    document.getElementById('submit-status').className = 'submit-status';
+
+    try {
+      await fetch(SHEETS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, date, names })
+      });
+      btn.innerHTML = '\u2713 Sent!';
+      showStatus('ok', '\u2713 ' + names.length + ' name' + (names.length > 1 ? 's' : '') + ' sent to Google Sheets successfully.');
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Send to Google Sheets';
+      showStatus('err', '\u2717 Could not reach Google Sheets. Check your internet connection and try again.');
+    }
+  }
+
+  function showStatus(type, msg) {
+    const el = document.getElementById('submit-status');
+    el.className = 'submit-status ' + type;
+    el.textContent = msg;
+  }
+
+  function doExport() {
+    const topic = document.getElementById('topic').value || 'Toolbox Talk';
+    const date  = document.getElementById('sheet-date').value;
+    const logoHtml = logoDataUrl
+      ? '<img src="' + logoDataUrl + '" style="height:64px;max-width:200px;object-fit:contain;" />'
+      : '<div style="width:180px;height:60px;border:2px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;">Logo</div>';
+    const names = getFilledNames();
+    const trs = names.map((name, i) => '<tr><td>' + (i+1) + '</td><td>' + name + '</td></tr>').join('');
+    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>' + topic + ' \u2014 Sign-In</title>'
+      + '<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">'
+      + '<style>body{font-family:\'DM Sans\',sans-serif;color:#1a1a18;background:#f7f5f0;padding:48px 40px;max-width:680px;margin:0 auto;}'
+      + '.logo-wrap{display:flex;justify-content:center;margin-bottom:28px;}'
+      + '.hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;}'
+      + '.tt-label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#1e3a6e;margin-bottom:8px;}'
+      + 'h1{font-family:\'DM Serif Display\',serif;font-size:26px;margin:0;}.dt{font-size:14px;color:#6b6b65;}'
+      + '.divider{border:none;border-top:2px solid #1a1a18;margin-bottom:24px;}'
+      + 'table{width:100%;border-collapse:collapse;font-size:14px;}'
+      + 'th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#6b6b65;padding:8px 12px;background:#eeecea;font-weight:500;}'
+      + 'td{padding:13px 12px;border-bottom:1px solid #eeecea;vertical-align:middle;}tr:last-child td{border-bottom:none;}'
+      + '.ft{margin-top:40px;font-size:11px;color:#b0afa8;}</style></head><body>'
+      + '<div class="logo-wrap">' + logoHtml + '</div>'
+      + '<div class="tt-label">Toolbox Talk</div>'
+      + '<div class="hdr"><h1>' + topic + '</h1><span class="dt">' + date + '</span></div>'
+      + '<hr class="divider"/>'
+      + '<table><thead><tr><th style="width:40px">#</th><th>Name</th></tr></thead><tbody>' + trs + '</tbody></table>'
+      + '<div class="ft">Exported ' + new Date().toLocaleString() + '</div></body></html>';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    a.download = topic.replace(/\s+/g, '_') + '_signin.html';
+    a.click();
+    showToast('Downloaded!');
+    closeModal();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+
+  addRow(false); addRow(false); addRow(false);
+</script>
+</body>
+</html>
