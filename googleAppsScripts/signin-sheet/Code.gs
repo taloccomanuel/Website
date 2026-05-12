@@ -1,4 +1,4 @@
-var VERSION       = "01.01g";
+var VERSION       = "01.02g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -238,6 +238,13 @@ function getHtml() {
     .topbar { padding: 0 16px; }
     .topic-input { font-size: 20px; }
     .confirm-box { width: 92vw; padding: 22px 18px 18px; }
+  }
+  .gas-version-pill {
+    position: fixed; bottom: 8px; left: 8px; z-index: 9999;
+    background: rgba(26,26,24,0.55); color: #f7f5f0;
+    padding: 3px 9px; border-radius: 10px;
+    font: 10px/1 monospace; letter-spacing: 0.04em;
+    pointer-events: none; user-select: none;
   }
 </style>
 </head>
@@ -516,6 +523,7 @@ function getHtml() {
   addRow(false); addRow(false); addRow(false);
   loadLastSaved();
 </script>
+<div class="gas-version-pill">v${VERSION}</div>
 </body>
 </html>`;
 }
