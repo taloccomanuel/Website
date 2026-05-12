@@ -1,0 +1,157 @@
+# Changelog Archive — Inventory Management (Google Apps Script)
+
+Older version sections rotated from [inventorymanagementgs.changelog.md](inventorymanagementgs.changelog.md). Full granularity preserved — entries are moved here verbatim when the main changelog exceeds 50 version sections.
+
+## Rotation Logic
+
+Same rotation logic as the repository changelog archive — see [CHANGELOG-archive.md](../../repository-information/CHANGELOG-archive.md) for the full procedure. In brief: count version sections, skip if ≤50, never rotate today's sections, rotate the oldest full date group together.
+
+---
+
+*(No archived sections yet)*
+
+## [v01.26g] — 2026-04-13 10:30:43 AM EST — v11.22r — [SHA unavailable]
+
+### Fixed
+- Selecting the empty option in Location or Category dropdowns now correctly clears the field
+
+## [v01.25g] — 2026-04-13 10:17:23 AM EST — v11.20r — [SHA unavailable]
+
+### Added
+- Item Name is now a required field — items cannot be added without a name
+
+## [v01.24g] — 2026-04-13 10:10:48 AM EST — v11.19r — [SHA unavailable]
+
+### Fixed
+- Each save operation now creates exactly one history entry instead of multiple
+- System-generated field updates no longer appear in history
+
+## [v01.23g] — 2026-04-13 10:02:09 AM EST — v11.18r — [SHA unavailable]
+
+### Fixed
+- Quantity reductions now correctly show as subtractions in history
+- Field changes (name, location, category, etc.) now appear in history when editing existing items
+
+## [v01.22g] — 2026-04-13 09:53:49 AM EST — v11.17r — [SHA unavailable]
+
+### Added
+- Inventory history tracking system with dedicated InventoryHistory sheet
+- Automatic logging of all inventory operations: new items, quantity additions, subtractions, field edits, and deletions
+- Paginated history retrieval with filtering by action type, date range, and search
+- Full history export for CSV download
+- 5000-entry cap with automatic cleanup of oldest entries
+
+## [v01.21g] — 2026-04-13 08:43:50 AM EST — v11.15r — [SHA unavailable]
+
+### Added
+- Every item now gets an auto-generated unique ID for reliable identification
+- Editing items works universally — no longer requires a barcode to be assigned
+
+## [v01.20g] — 2026-04-13 08:15:01 AM EST — v11.13r — [SHA unavailable]
+
+### Added
+- "Low Stock Threshold" column automatically added to inventory data for tracking stock levels
+
+## [v01.19g] — 2026-04-13 07:44:46 AM EST — v11.10r — [SHA unavailable]
+
+### Fixed
+- Dropdown selections (Location, Category) now save correctly when updating existing items
+
+## [v01.18g] — 2026-04-13 07:35:37 AM EST — v11.09r — [SHA unavailable]
+
+### Added
+- Location and Category columns automatically added to inventory data
+- Dropdown options managed via a dedicated spreadsheet tab — auto-created with default options on first use
+- Dropdown values cached for fast loading
+
+## [v01.17g] — 2026-04-12 09:43:43 PM EST — v11.07r — [SHA unavailable]
+
+### Changed
+- Minor internal improvements
+
+## [v01.16g] — 2026-04-12 09:33:23 PM EST — v11.06r — [SHA unavailable]
+
+### Changed
+- Removing photos from items now processes in a single server call for faster response
+
+## [v01.15g] — 2026-04-12 09:22:44 PM EST — v11.05r — [SHA unavailable]
+
+### Changed
+- Adding items with photos now uses a single server call for faster processing
+
+## [v01.14g] — 2026-04-12 08:29:48 PM EST — v11.03r — [SHA unavailable]
+
+### Fixed
+- Added debug logging to image upload functions for troubleshooting
+
+## [v01.13g] — 2026-04-12 08:19:09 PM EST — v11.02r — [SHA unavailable]
+
+### Changed
+- Image upload now supports optional row assignment in a single call
+
+## [v01.12g] — 2026-04-12 08:04:20 PM EST — v11.00r — [SHA unavailable]
+
+### Fixed
+- Fixed image upload reliability — images now process correctly when adding items
+
+## [v01.11g] — 2026-04-12 07:50:42 PM EST — v10.99r — [SHA unavailable]
+
+### Changed
+- Image upload and item save now happen in a single server call instead of three separate calls
+- Faster and more reliable image handling with no risk of orphaned images
+
+## [v01.10g] — 2026-04-12 06:56:53 PM EST — v10.97r — [SHA unavailable]
+
+### Fixed
+- Fixed image upload permission errors — images should now save successfully
+
+## [v01.09g] — 2026-04-12 05:44:53 PM EST — v10.93r — [SHA unavailable]
+
+### Changed
+- Image column is now automatically set up when you first load the app — no manual spreadsheet editing needed
+
+## [v01.08g] — 2026-04-12 05:25:45 PM EST — v10.92r — [SHA unavailable]
+
+### Added
+- Image storage for inventory items — photos are saved securely and linked to each item
+- Images are automatically cleaned up when an item is deleted
+
+## [v01.07g] — 2026-04-12 03:07:57 PM EST — v10.86r — [SHA unavailable]
+
+### Fixed
+- Changing an item's name via the edit button now saves correctly
+
+## [v01.06g] — 2026-04-12 08:10:10 PM EST — v10.79r — [SHA unavailable]
+
+### Fixed
+- Fixed leading zeros in barcodes still being stripped after the v01.05g attempt — that fix set the column format to text but Sheets' value parser was still coercing digit strings to numbers before the format was checked. The new approach writes new rows with the barcode cell empty first, then re-writes just the barcode cell with an explicit text-format-then-value sequence so leading zeros are reliably preserved. Per-row edits via the pencil button get the same treatment when targeting the barcode column
+
+## [v01.05g] — 2026-04-11 07:57:33 PM EST — v10.78r — [SHA unavailable]
+
+### Fixed
+- Barcodes that start with a 0 (like `0123456`) are now stored in the spreadsheet exactly as scanned, instead of having the leading zero stripped. Previously, scanning a leading-zero barcode would write it to the sheet as a number (so `0123456` became `123456`), and re-scanning the same item later would fail to match the existing row and treat it as a new item. The Barcode column is now formatted as text on every write, preserving leading zeros forever
+- **Existing rows with already-stripped barcodes are NOT auto-fixed** — the original leading zeros can't be recovered from a value that's already been converted to a number. To fix existing items: either re-enter them with the correct barcode (delete the bad row first, or edit the cell directly in the spreadsheet) or manually retype the barcode in the Barcode column with a leading apostrophe (e.g. `'0123456`) which forces it to be treated as text
+
+## [v01.04g] — 2026-04-10 12:08:01 PM EST — v10.65r — [SHA unavailable]
+
+### Changed
+- Default sheet layout now uses 5 columns (Item Name, Quantity, Barcode, Last User, Last Updated) — Timestamp column removed
+
+## [v01.03g] — 2026-04-09 07:46:26 PM EST — v10.56r — [SHA unavailable]
+
+### Changed
+- Scanning a barcode that already exists now updates the quantity instead of creating a duplicate row
+
+## [v01.02g] — 2026-04-09 07:00:50 PM EST — v10.54r — [SHA unavailable]
+
+### Fixed
+- Fixed data loading — app now connects to the spreadsheet correctly
+
+## [v01.01g] — 2026-04-09 06:46:36 PM EST — v10.53r — [SHA unavailable]
+
+### Added
+- Live inventory data with automatic refresh
+- Add, edit, and delete inventory items
+- Data caching for faster page loads
+
+Developed by: ShadowAISolutions
