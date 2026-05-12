@@ -1,4 +1,7 @@
 var SPREADSHEET_ID = "1o0EHsjkh7NJCpcvTPjVU8zUtKSwwOs2aolfnfOkrbwg";
+// Google Drive folder ID where signature images are saved.
+// Leave empty ("") to save to the root of My Drive.
+var SIGNATURE_FOLDER_ID = "";
 
 function doGet(e) {
   return HtmlService.createHtmlOutput(getHtml())
@@ -25,11 +28,26 @@ function doPost(e) {
 function saveData(topic, date, entries) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
+  var folder = SIGNATURE_FOLDER_ID
+    ? DriveApp.getFolderById(SIGNATURE_FOLDER_ID)
+    : DriveApp.getRootFolder();
+
   entries.forEach(function(entry) {
     var name = (typeof entry === 'string') ? entry : entry.name;
-    var sig  = (typeof entry === 'object' && entry.sig) ? entry.sig : '';
-    sheet.appendRow([date, topic, name, new Date().toLocaleString(), sig]);
+    var rawSig = (typeof entry === 'object' && entry.sig) ? entry.sig : '';
+    var sigLink = '';
+    if (rawSig) {
+      var base64 = rawSig.replace(/^data:image\/png;base64,/, '');
+      var safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'signature';
+      var fileName = safeName + ' — ' + date + '.png';
+      var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/png', fileName);
+      var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      sigLink = file.getUrl();
+    }
+    sheet.appendRow([date, topic, name, new Date().toLocaleString(), sigLink]);
   });
+
   var savedAt = new Date().toLocaleString();
   PropertiesService.getScriptProperties().setProperties({
     lastSavedAt: savedAt,
