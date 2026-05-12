@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="build-version" content="v01.02w">
 <title>Toolbox Talk Sign-In</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,11 +14,82 @@
     height: 100vh;
     border: none;
   }
+  #version-indicator {
+    position: fixed; bottom: 8px; right: 22px; z-index: 9999;
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,0.55); color: #ccc; padding: 4px 10px;
+    border-radius: 12px; font: 11px/1 monospace;
+  }
+  #version-indicator .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #888;
+    transition: background 0.3s ease;
+  }
+  #version-indicator .dot.checking { background: #ffa726; }
+  #version-indicator .dot.found    { background: #66bb6a; }
+  #version-indicator .dot.error    { background: #ef5350; }
 </style>
 </head>
 <body>
   <iframe src="https://script.google.com/macros/s/AKfycbyaTG137tcJUigFikTtHTJt2j3IXmKvvWnwn8_y9eqr9PKb5AYCzPU6hkjyGjMFrNZD/exec"
           allowfullscreen>
   </iframe>
+
+<script>
+(function() {
+  var POLL_INTERVAL = 10000;
+
+  var basePath = window.location.href.split('?')[0].split('#')[0];
+  var pageName = basePath.substring(basePath.lastIndexOf('/') + 1).replace('.html', '');
+  if (!pageName) pageName = 'signin-sheet';
+  var versionUrl = basePath.substring(0, basePath.lastIndexOf('/') + 1)
+                 + 'html-versions/' + pageName + 'html.version.txt';
+
+  var currentVersion = null;
+  var indicator = null;
+  var dot = null;
+
+  function parseVersionTxt(raw) {
+    var parts = raw.split('|');
+    return { version: (parts[1] || '').replace(/^v/, '') };
+  }
+
+  function createIndicator(version) {
+    indicator = document.createElement('div');
+    indicator.id = 'version-indicator';
+    indicator.innerHTML = '<span class="dot"></span><span class="label">v' + version + '</span>';
+    document.body.appendChild(indicator);
+    dot = indicator.querySelector('.dot');
+  }
+
+  function checkForUpdate() {
+    if (dot) dot.className = 'dot checking';
+    fetch(versionUrl + '?_cb=' + Date.now(), { cache: 'no-store' })
+      .then(function(res) { return res.text(); })
+      .then(function(v) {
+        var parsed = parseVersionTxt(v.trim());
+        if (!currentVersion) {
+          currentVersion = parsed.version;
+          createIndicator(currentVersion);
+        } else if (parsed.version && parsed.version !== currentVersion) {
+          if (dot) dot.className = 'dot found';
+          if (indicator) indicator.querySelector('.label').textContent = 'Updating...';
+          setTimeout(function() { window.location.reload(); }, 2000);
+          return;
+        }
+        if (dot) setTimeout(function() { dot.className = 'dot'; }, 600);
+        setTimeout(checkForUpdate, POLL_INTERVAL);
+      })
+      .catch(function() {
+        if (dot) {
+          dot.className = 'dot error';
+          setTimeout(function() { dot.className = 'dot'; }, 2000);
+        }
+        setTimeout(checkForUpdate, POLL_INTERVAL);
+      });
+  }
+
+  checkForUpdate();
+})();
+</script>
 </body>
 </html>

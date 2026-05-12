@@ -143,6 +143,16 @@ jobs:
             -d "action=deploy" \
             --max-time 120 || true
 
+      - name: Deploy signin-sheet
+        run: |
+          PRE=${{ steps.merge.outputs.pre_merge_sha }}
+          # Only deploy if Code.gs was modified in this merge
+          git diff --name-only "$PRE" HEAD | grep -q "googleAppsScripts/signin-sheet/Code.gs" && \
+          curl -L -X POST \
+            "https://script.google.com/macros/s/AKfycbyaTG137tcJUigFikTtHTJt2j3IXmKvvWnwn8_y9eqr9PKb5AYCzPU6hkjyGjMFrNZD/exec" \
+            -d "action=deploy" \
+            --max-time 120 || true
+
       - name: Delete branch
         run: |
           git push origin --delete ${{ github.ref_name }}

@@ -1,3 +1,11 @@
+var VERSION       = "01.01g";
+var TITLE         = "Toolbox Talk Sign-In";
+var GITHUB_OWNER  = "taloccomanuel";
+var GITHUB_REPO   = "Website";
+var GITHUB_BRANCH = "main";
+var FILE_PATH     = "googleAppsScripts/signin-sheet/Code.gs";
+var DEPLOYMENT_ID = "AKfycbyaTG137tcJUigFikTtHTJt2j3IXmKvvWnwn8_y9eqr9PKb5AYCzPU6hkjyGjMFrNZD";
+
 var SPREADSHEET_ID = "1o0EHsjkh7NJCpcvTPjVU8zUtKSwwOs2aolfnfOkrbwg";
 // Google Drive folder ID where signature images are saved.
 // Leave empty ("") to save to the root of My Drive.
@@ -5,11 +13,19 @@ var SIGNATURE_FOLDER_ID = "";
 
 function doGet(e) {
   return HtmlService.createHtmlOutput(getHtml())
-    .setTitle("Toolbox Talk Sign-In")
+    .setTitle(TITLE)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function doPost(e) {
+  // ⚠️ CRITICAL: Do NOT add authentication, secret checks, or any guards to the deploy action.
+  // The GitHub Actions workflow calls doPost(action=deploy) via webhook to trigger GAS self-update.
+  // Adding auth here will silently break auto-updates.
+  var action = (e && e.parameter && e.parameter.action) || "";
+  if (action === "deploy") {
+    return ContentService.createTextOutput(pullAndDeployFromGitHub());
+  }
+
   try {
     var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
@@ -23,6 +39,68 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()}))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+function pullAndDeployFromGitHub() {
+  var GITHUB_TOKEN = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN");
+
+  var apiUrl = "https://api.github.com/repos/"
+    + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/" + FILE_PATH
+    + "?ref=" + GITHUB_BRANCH + "&t=" + new Date().getTime();
+  var fetchHeaders = { "Accept": "application/vnd.github.v3.raw" };
+  if (GITHUB_TOKEN) fetchHeaders["Authorization"] = "token " + GITHUB_TOKEN;
+  var newCode = UrlFetchApp.fetch(apiUrl, { headers: fetchHeaders }).getContentText();
+
+  var versionMatch  = newCode.match(/var VERSION\s*=\s*"([^"]+)"/);
+  var pulledVersion = versionMatch ? versionMatch[1] : null;
+  if (pulledVersion && pulledVersion === VERSION) {
+    return "Already up to date (" + VERSION + ")";
+  }
+
+  var scriptId   = ScriptApp.getScriptId();
+  var contentUrl = "https://script.googleapis.com/v1/projects/" + scriptId + "/content";
+  var current    = UrlFetchApp.fetch(contentUrl, {
+    headers: { "Authorization": "Bearer " + ScriptApp.getOAuthToken() }
+  });
+  var currentFiles = JSON.parse(current.getContentText()).files;
+  var manifest = currentFiles.find(function(f) { return f.name === "appsscript"; });
+
+  UrlFetchApp.fetch(contentUrl, {
+    method: "put",
+    contentType: "application/json",
+    headers: { "Authorization": "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify({
+      files: [ { name: "Code", type: "SERVER_JS", source: newCode }, manifest ]
+    })
+  });
+
+  var versionUrl      = "https://script.googleapis.com/v1/projects/" + scriptId + "/versions";
+  var versionResponse = UrlFetchApp.fetch(versionUrl, {
+    method: "post",
+    contentType: "application/json",
+    headers: { "Authorization": "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify({
+      description: pulledVersion + " — from GitHub " + new Date().toLocaleString()
+    })
+  });
+  var newVersion = JSON.parse(versionResponse.getContentText()).versionNumber;
+
+  var deployUrl = "https://script.googleapis.com/v1/projects/" + scriptId
+                + "/deployments/" + DEPLOYMENT_ID;
+  UrlFetchApp.fetch(deployUrl, {
+    method: "put",
+    contentType: "application/json",
+    headers: { "Authorization": "Bearer " + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify({
+      deploymentConfig: {
+        scriptId: scriptId,
+        versionNumber: newVersion,
+        description: pulledVersion + " (deployment " + newVersion + ")"
+      }
+    })
+  });
+
+  return "Updated to " + pulledVersion + " (deployment " + newVersion + ")";
 }
 
 function saveData(topic, date, entries) {
