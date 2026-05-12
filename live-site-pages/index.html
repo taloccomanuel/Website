@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="build-version" content="01.02w">
+  <title>Manuel Talocco</title>
+  <style>
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a1a; color: #e8e8f0; }
+
+    /* ─── Auto-update splashes ─── */
+    .splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; transition: opacity 0.3s ease; }
+    .splash .splash-title { color: #fff; font: bold 36px/1 sans-serif; margin-bottom: 20px; }
+    .splash img { max-width: 500px; max-height: 500px; }
+    #splash-green { background: #1b5e20; }
+    #version-indicator { position: fixed; bottom: 8px; right: 8px; z-index: 9999; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.55); color: #ccc; padding: 4px 10px; border-radius: 12px; font: 11px/1 monospace; user-select: none; pointer-events: none; transition: all 0.3s ease; }
+    #version-indicator .dot { width: 8px; height: 8px; border-radius: 50%; background: #888; transition: background 0.3s ease; }
+    #version-indicator .dot.checking { background: #ffa726; animation: pulse-dot 0.6s infinite alternate; }
+    #version-indicator .dot.found { background: #66bb6a; }
+    #version-indicator .dot.error { background: #ef5350; }
+    @keyframes pulse-dot { from { opacity: 1; } to { opacity: 0.4; } }
+
+    /* ─── Page Content ─── */
+    .page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; text-align: center; }
+    .page h1 { font-size: clamp(28px, 5vw, 56px); font-weight: 800; letter-spacing: -1px; line-height: 1.2; margin-bottom: 12px; }
+    .page h1 span { color: #42a5f5; }
+    .page p { font-size: clamp(14px, 1.6vw, 18px); line-height: 1.7; color: rgba(255,255,255,0.55); max-width: 600px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+
+<div id="splash-green" class="splash"><div class="splash-title">Website Ready</div></div>
+
+<div class="page">
+  <div>
+    <h1>Manuel <span>Talocco</span></h1>
+    <p>Page under construction.</p>
+  </div>
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script>
+/* ── Auto-refresh ── */
+var AUTO_REFRESH = true;
+var SHOW_WEB_VERSION = true;
+(function() {
+  var POLL = 10000;
+  var cv = (document.querySelector('meta[name="build-version"]')||{}).content;
+  if (!cv || !AUTO_REFRESH) return;
+  var ind = document.createElement('div'); ind.id = 'version-indicator';
+  ind.innerHTML = '<span class="dot"></span><span class="label">v'+cv+'</span>';
+  if (SHOW_WEB_VERSION) document.body.appendChild(ind);
+  var dot = ind.querySelector('.dot');
+  function check() {
+    dot.className = 'dot checking';
+    fetch(window.location.href.split('?')[0]+'?_cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.text();}).then(function(h){
+      var m = h.match(/<meta\s+name="build-version"\s+content="([^"]+)"/);
+      if (m && m[1] !== cv) { dot.className='dot found'; ind.querySelector('.label').textContent='Updating...'; sessionStorage.setItem('web-pending-reload','1'); setTimeout(function(){window.location.reload();},2000); }
+      else { setTimeout(function(){dot.className='dot';},800); setTimeout(check,POLL); }
+    }).catch(function(){ dot.className='dot error'; setTimeout(function(){dot.className='dot';},2000); setTimeout(check,POLL); });
+  }
+  setTimeout(check, POLL);
+})();
+
+if (sessionStorage.getItem('web-pending-reload')) {
+  sessionStorage.removeItem('web-pending-reload');
+  var sp = document.getElementById('splash-green');
+  if (sp) { sp.style.display='flex'; setTimeout(function(){ sp.style.opacity='0'; setTimeout(function(){ sp.style.display='none'; },300); },1000); }
+}
+</script>
+</body>
+</html>
