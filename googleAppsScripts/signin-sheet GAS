@@ -22,18 +22,20 @@ function doPost(e) {
   }
 }
 
-function saveData(topic, date, names) {
+function saveData(topic, date, entries) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
-  names.forEach(function(name) {
-    sheet.appendRow([date, topic, name, new Date().toLocaleString()]);
+  entries.forEach(function(entry) {
+    var name = (typeof entry === 'string') ? entry : entry.name;
+    var sig  = (typeof entry === 'object' && entry.sig) ? entry.sig : '';
+    sheet.appendRow([date, topic, name, new Date().toLocaleString(), sig]);
   });
   var savedAt = new Date().toLocaleString();
   PropertiesService.getScriptProperties().setProperties({
     lastSavedAt: savedAt,
     lastTopic: topic,
     lastDate: date,
-    lastCount: names.length.toString()
+    lastCount: entries.length.toString()
   });
   return savedAt;
 }
@@ -90,7 +92,14 @@ function getHtml() {
   .table-head { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; padding: 10px 32px; background: var(--paper-mid); border-bottom: 1px solid var(--line); }
   .col-label { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-muted); }
   .entries { padding: 0 32px; }
-  .entry-row { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); animation: fadeIn 0.18s ease both; }
+  .entry-row { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; align-items: start; padding: 13px 0; border-bottom: 1px solid var(--line); animation: fadeIn 0.18s ease both; }
+  .entry-content { display: flex; flex-direction: column; gap: 8px; }
+  .sig-canvas { display: block; width: 100%; height: 52px; border: 1px solid var(--line); border-radius: 4px; background: #fff; cursor: crosshair; touch-action: none; }
+  .sig-canvas.signed { border-color: var(--accent); }
+  .sig-row { display: flex; align-items: center; gap: 8px; }
+  .clear-sig { background: none; border: none; font-size: 11px; color: var(--ink-faint); cursor: pointer; text-decoration: underline; padding: 0; flex-shrink: 0; }
+  .clear-sig:hover { color: var(--ink-muted); }
+  .clear-sig:disabled { opacity: 0.4; cursor: not-allowed; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   .entry-row:last-child { border-bottom: none; }
   .row-num { font-size: 12px; color: var(--ink-faint); font-weight: 300; text-align: center; }
@@ -163,7 +172,7 @@ function getHtml() {
     </div>
     <div class="table-head">
       <div class="col-label">#</div>
-      <div class="col-label">Name</div>
+      <div class="col-label">Name &amp; Signature</div>
       <div></div>
     </div>
     <div class="entries" id="entries"></div>
@@ -210,9 +219,16 @@ function getHtml() {
     el.id = 'row-' + id;
     el.innerHTML =
       '<div class="row-num" id="num-' + id + '"></div>' +
-      '<input class="name-input" id="name-' + id + '" type="text" placeholder="Full name" autocomplete="off" oninput="onNameInput(' + id + ')" />' +
+      '<div class="entry-content">' +
+        '<input class="name-input" id="name-' + id + '" type="text" placeholder="Full name" autocomplete="off" oninput="onNameInput(' + id + ')" />' +
+        '<div class="sig-row">' +
+          '<canvas class="sig-canvas" id="canvas-' + id + '" height="52"></canvas>' +
+          '<button class="clear-sig" id="clr-' + id + '" onclick="clearCanvas(' + id + ')" type="button">Clear</button>' +
+        '</div>' +
+      '</div>' +
       '<button class="remove-btn" id="rm-' + id + '" onclick="removeRow(' + id + ')" title="Remove">&#215;</button>';
     document.getElementById('entries').appendChild(el);
+    initCanvas(id);
     reNumber();
     updateCount();
     if (focus) setTimeout(() => document.getElementById('name-' + id)?.focus(), 50);
@@ -244,8 +260,59 @@ function getHtml() {
     document.getElementById('count').textContent = n + (n === 1 ? ' attendee' : ' attendees');
   }
 
-  function getFilledNames() {
-    return rows.map(id => (document.getElementById('name-' + id)?.value || '').trim()).filter(Boolean);
+  function getFilledEntries() {
+    return rows
+      .map(id => {
+        const name = (document.getElementById('name-' + id)?.value || '').trim();
+        if (!name) return null;
+        const canvas = document.getElementById('canvas-' + id);
+        const sig = canvas ? canvas.toDataURL('image/png') : '';
+        return { name, sig };
+      })
+      .filter(Boolean);
+  }
+
+  function initCanvas(id) {
+    const canvas = document.getElementById('canvas-' + id);
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width) || 280;
+    canvas.height = 52;
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const src = e.touches ? e.touches[0] : e;
+      return {
+        x: (src.clientX - r.left) * (canvas.width / r.width),
+        y: (src.clientY - r.top) * (canvas.height / r.height)
+      };
+    }
+    function start(e) { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function draw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = getPos(e);
+      ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#1a1a18';
+      ctx.lineTo(p.x, p.y); ctx.stroke();
+      canvas.classList.add('signed');
+    }
+    function stop() { drawing = false; }
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stop);
+    canvas.addEventListener('mouseleave', stop);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stop);
+  }
+
+  function clearCanvas(id) {
+    const canvas = document.getElementById('canvas-' + id);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.classList.remove('signed');
   }
 
   function setFieldsDisabled(disabled) {
@@ -254,8 +321,12 @@ function getHtml() {
     rows.forEach(id => {
       const inp = document.getElementById('name-' + id);
       const btn = document.getElementById('rm-' + id);
+      const clr = document.getElementById('clr-' + id);
+      const cvs = document.getElementById('canvas-' + id);
       if (inp) inp.disabled = disabled;
       if (btn) btn.disabled = disabled;
+      if (clr) clr.disabled = disabled;
+      if (cvs) cvs.style.pointerEvents = disabled ? 'none' : '';
     });
   }
 
@@ -282,8 +353,8 @@ function getHtml() {
 
   /* ── Save ── */
   function sendToSheets() {
-    const names = getFilledNames();
-    if (!names.length) {
+    const entries = getFilledEntries();
+    if (!entries.length) {
       showStatus('err', 'Please add at least one name before saving.');
       return;
     }
@@ -299,8 +370,8 @@ function getHtml() {
     google.script.run
       .withSuccessHandler(function(savedAt) {
         btn.innerHTML = '&#10003; Saved!';
-        showStatus('ok', names.length + ' record' + (names.length > 1 ? 's' : '') + ' saved successfully.');
-        setLastSaved(savedAt, topic, names.length);
+        showStatus('ok', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved successfully.');
+        setLastSaved(savedAt, topic, entries.length);
         setTimeout(function() {
           doClearAll();
           btn.disabled = false;
@@ -314,7 +385,7 @@ function getHtml() {
         btn.textContent = 'Save';
         showStatus('err', 'Unable to save. Please check your connection and try again.');
       })
-      .saveData(topic, date, names);
+      .saveData(topic, date, entries);
   }
 
   function showStatus(type, msg) {
