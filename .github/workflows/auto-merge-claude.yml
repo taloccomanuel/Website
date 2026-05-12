@@ -107,7 +107,7 @@ jobs:
         id: check-changes
         run: |
           PRE=${{ steps.merge.outputs.pre_merge_sha }}
-          if git diff --name-only "$PRE" HEAD | grep -q "^httpsdocs/"; then
+          if git diff --name-only "$PRE" HEAD | grep -q "^live-site-pages/"; then
             echo "pages-changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "pages-changed=false" >> "$GITHUB_OUTPUT"
@@ -177,7 +177,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './httpsdocs'
+          path: './live-site-pages'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
