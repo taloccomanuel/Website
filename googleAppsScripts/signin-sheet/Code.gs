@@ -1,4 +1,4 @@
-var VERSION       = "01.10g";
+var VERSION       = "01.11g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -107,6 +107,7 @@ function saveData(topic, date, entries) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
 
+  var sigErrors = [];
   entries.forEach(function(entry) {
     var name = (typeof entry === 'string') ? entry : entry.name;
     var rawSig = (typeof entry === 'object' && entry.sig) ? entry.sig : '';
@@ -128,7 +129,7 @@ function saveData(topic, date, entries) {
           Logger.log('setSharing failed for ' + name + ': ' + shareErr.message);
         }
       } catch (sigErr) {
-        Logger.log('Signature save failed for ' + name + ': ' + sigErr.message);
+        sigErrors.push(name + ': ' + sigErr.message);
       }
     }
     sheet.appendRow([date, topic, name, new Date().toLocaleString(), sigLink]);
@@ -141,7 +142,7 @@ function saveData(topic, date, entries) {
     lastDate: date,
     lastCount: entries.length.toString()
   });
-  return savedAt;
+  return { savedAt: savedAt, sigErrors: sigErrors };
 }
 
 function getLastSaved() {
@@ -223,6 +224,7 @@ function getHtml() {
   .submit-status { font-size: 13px; padding: 10px 16px; border-radius: var(--radius); display: none; text-align: center; }
   .submit-status.ok { background: #e8f5ee; color: #1a7340; display: block; }
   .submit-status.err { background: #fdecea; color: #b03030; display: block; }
+  .submit-status.warn { background: #fff8e1; color: #7a5c00; display: block; }
   .last-saved { font-size: 12px; color: var(--ink-faint); text-align: center; line-height: 1.6; }
   .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -479,9 +481,15 @@ function getHtml() {
     document.getElementById('submit-status').className = 'submit-status';
 
     google.script.run
-      .withSuccessHandler(function(savedAt) {
+      .withSuccessHandler(function(result) {
+        var savedAt = result.savedAt || result;
+        var sigErrors = result.sigErrors || [];
         btn.innerHTML = '&#10003; Saved!';
-        showStatus('ok', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved successfully.');
+        if (sigErrors.length) {
+          showStatus('warn', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved. Signature upload failed: ' + sigErrors[0]);
+        } else {
+          showStatus('ok', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved successfully.');
+        }
         setLastSaved(savedAt, topic, entries.length);
         setTimeout(function() {
           doClearAll();
