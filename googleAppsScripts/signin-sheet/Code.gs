@@ -1,4 +1,4 @@
-var VERSION       = "01.08g";
+var VERSION       = "01.09g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -106,9 +106,6 @@ function pullAndDeployFromGitHub() {
 function saveData(topic, date, entries) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
-  var folder = SIGNATURE_FOLDER_ID
-    ? DriveApp.getFolderById(SIGNATURE_FOLDER_ID)
-    : DriveApp.getRootFolder();
 
   entries.forEach(function(entry) {
     var name = (typeof entry === 'string') ? entry : entry.name;
@@ -116,6 +113,9 @@ function saveData(topic, date, entries) {
     var sigLink = '';
     if (rawSig) {
       try {
+        var folder = SIGNATURE_FOLDER_ID
+          ? DriveApp.getFolderById(SIGNATURE_FOLDER_ID)
+          : DriveApp.getRootFolder();
         var base64 = rawSig.replace(/^data:image\/png;base64,/, '');
         var safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'signature';
         var fileName = safeName + ' — ' + date + '.png';
