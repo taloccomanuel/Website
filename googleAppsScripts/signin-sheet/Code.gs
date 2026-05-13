@@ -1,4 +1,4 @@
-var VERSION       = "01.13g";
+var VERSION       = "01.14g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -116,18 +116,19 @@ function saveData(topic, date, entries) {
       try {
         var base64 = rawSig.replace(/^data:image\/png;base64,/, '');
         var safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'signature';
-        var fileName = safeName + ' — ' + date + '.png';
+        var fileName = safeName + ' - ' + date + '.png';
         var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/png', fileName);
-        var file = SIGNATURE_FOLDER_ID
-          ? DriveApp.getFolderById(SIGNATURE_FOLDER_ID).createFile(blob)
-          : DriveApp.createFile(blob);
-        sigLink = file.getUrl();
+        var meta = { name: fileName };
+        if (SIGNATURE_FOLDER_ID) meta.parents = [SIGNATURE_FOLDER_ID];
+        var created = Drive.Files.create(meta, blob, { fields: 'id,webViewLink' });
+        sigLink = created.webViewLink || ('https://drive.google.com/file/d/' + created.id + '/view');
         try {
-          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          Drive.Permissions.create({ role: 'reader', type: 'anyone' }, created.id);
         } catch (shareErr) {
-          Logger.log('setSharing failed for ' + name + ': ' + shareErr.message);
+          Logger.log('Permissions.create failed for ' + name + ': ' + shareErr.message);
         }
       } catch (sigErr) {
+        Logger.log('Signature upload failed for ' + name + ': ' + sigErr.message + '\n' + (sigErr.stack || '(no stack)'));
         sigErrors.push(name + ': ' + sigErr.message);
       }
     }
