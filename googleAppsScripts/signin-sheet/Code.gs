@@ -1,4 +1,4 @@
-var VERSION       = "01.14g";
+var VERSION       = "01.15g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -103,7 +103,7 @@ function pullAndDeployFromGitHub() {
   return "Updated to " + pulledVersion + " (deployment " + newVersion + ")";
 }
 
-function saveData(topic, date, entries) {
+function saveData(topic, date, location, entries) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
 
@@ -132,13 +132,14 @@ function saveData(topic, date, entries) {
         sigErrors.push(name + ': ' + sigErr.message);
       }
     }
-    sheet.appendRow([date, topic, name, new Date().toLocaleString(), sigLink]);
+    sheet.appendRow([date, topic, location, name, new Date().toLocaleString(), sigLink]);
   });
 
   var savedAt = new Date().toLocaleString();
   PropertiesService.getScriptProperties().setProperties({
     lastSavedAt: savedAt,
     lastTopic: topic,
+    lastLocation: location,
     lastDate: date,
     lastCount: entries.length.toString()
   });
@@ -150,6 +151,7 @@ function getLastSaved() {
   return {
     savedAt: props.lastSavedAt || null,
     topic: props.lastTopic || null,
+    location: props.lastLocation || null,
     date: props.lastDate || null,
     count: props.lastCount || null
   };
@@ -194,6 +196,11 @@ function getHtml() {
   .header-right { flex-shrink: 0; text-align: right; }
   .date-input { font-family: 'DM Sans', sans-serif; font-size: 14px; border: none; outline: none; color: var(--ink-muted); background: transparent; text-align: right; cursor: pointer; }
   .date-input:disabled { opacity: 0.5; cursor: not-allowed; }
+  .location-row { margin-top: 14px; }
+  .location-input { font-family: 'DM Sans', sans-serif; font-size: 15px; border: none; border-bottom: 1px solid var(--paper-dark); outline: none; color: var(--ink); background: transparent; width: 100%; padding: 4px 0; transition: border-color 0.2s; }
+  .location-input:focus { border-bottom-color: var(--accent); }
+  .location-input::placeholder { color: var(--ink-faint); }
+  .location-input:disabled { opacity: 0.5; cursor: not-allowed; }
   .table-head { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; padding: 10px 32px; background: var(--paper-mid); border-bottom: 1px solid var(--line); }
   .col-label { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-muted); }
   .entries { padding: 0 32px; }
@@ -281,6 +288,10 @@ function getHtml() {
           <div class="field-label">Date</div>
           <input class="date-input" id="sheet-date" type="date" />
         </div>
+      </div>
+      <div class="location-row">
+        <div class="field-label">Location</div>
+        <input class="location-input" id="location" type="text" placeholder="Enter location&hellip;" />
       </div>
     </div>
     <div class="table-head">
@@ -431,6 +442,7 @@ function getHtml() {
   function setFieldsDisabled(disabled) {
     document.getElementById('topic').disabled = disabled;
     document.getElementById('sheet-date').disabled = disabled;
+    document.getElementById('location').disabled = disabled;
     rows.forEach(id => {
       const inp = document.getElementById('name-' + id);
       const btn = document.getElementById('rm-' + id);
@@ -471,8 +483,9 @@ function getHtml() {
       showStatus('err', 'Please add at least one name before saving.');
       return;
     }
-    const topic = document.getElementById('topic').value.trim() || 'Untitled';
-    const date  = document.getElementById('sheet-date').value;
+    const topic    = document.getElementById('topic').value.trim() || 'Untitled';
+    const date     = document.getElementById('sheet-date').value;
+    const location = document.getElementById('location').value.trim();
     const btn   = document.getElementById('save-btn');
 
     btn.disabled = true;
@@ -496,6 +509,7 @@ function getHtml() {
           var warnText = hadSigError ? document.getElementById('submit-status').textContent : '';
           doClearAll();
           document.getElementById('topic').value = '';
+          document.getElementById('location').value = '';
           btn.disabled = false;
           btn.textContent = 'Save';
           setFieldsDisabled(false);
@@ -510,7 +524,7 @@ function getHtml() {
         btn.textContent = 'Save';
         showStatus('err', 'Unable to save. Please check your connection and try again.');
       })
-      .saveData(topic, date, entries);
+      .saveData(topic, date, location, entries);
   }
 
   function showStatus(type, msg) {
