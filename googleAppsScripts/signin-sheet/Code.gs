@@ -1,4 +1,4 @@
-var VERSION       = "01.12g";
+var VERSION       = "01.13g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -114,14 +114,13 @@ function saveData(topic, date, entries) {
     var sigLink = '';
     if (rawSig) {
       try {
-        var folder = SIGNATURE_FOLDER_ID
-          ? DriveApp.getFolderById(SIGNATURE_FOLDER_ID)
-          : DriveApp.getRootFolder();
         var base64 = rawSig.replace(/^data:image\/png;base64,/, '');
         var safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'signature';
         var fileName = safeName + ' — ' + date + '.png';
         var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/png', fileName);
-        var file = folder.createFile(blob);
+        var file = SIGNATURE_FOLDER_ID
+          ? DriveApp.getFolderById(SIGNATURE_FOLDER_ID).createFile(blob)
+          : DriveApp.createFile(blob);
         sigLink = file.getUrl();
         try {
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
@@ -493,13 +492,14 @@ function getHtml() {
         setLastSaved(savedAt, topic, entries.length);
         setTimeout(function() {
           var hadSigError = sigErrors.length > 0;
+          var warnText = hadSigError ? document.getElementById('submit-status').textContent : '';
           doClearAll();
           document.getElementById('topic').value = '';
           btn.disabled = false;
           btn.textContent = 'Save';
           setFieldsDisabled(false);
-          if (!hadSigError) {
-            document.getElementById('submit-status').className = 'submit-status';
+          if (hadSigError) {
+            showStatus('warn', warnText);
           }
         }, 1800);
       })
