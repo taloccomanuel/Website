@@ -1,4 +1,4 @@
-var VERSION       = "01.07g";
+var VERSION       = "01.08g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -115,13 +115,17 @@ function saveData(topic, date, entries) {
     var rawSig = (typeof entry === 'object' && entry.sig) ? entry.sig : '';
     var sigLink = '';
     if (rawSig) {
-      var base64 = rawSig.replace(/^data:image\/png;base64,/, '');
-      var safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'signature';
-      var fileName = safeName + ' — ' + date + '.png';
-      var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/png', fileName);
-      var file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      sigLink = file.getUrl();
+      try {
+        var base64 = rawSig.replace(/^data:image\/png;base64,/, '');
+        var safeName = name.replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'signature';
+        var fileName = safeName + ' — ' + date + '.png';
+        var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/png', fileName);
+        var file = folder.createFile(blob);
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        sigLink = file.getUrl();
+      } catch (sigErr) {
+        Logger.log('Signature save failed for ' + name + ': ' + sigErr.message);
+      }
     }
     sheet.appendRow([date, topic, name, new Date().toLocaleString(), sigLink]);
   });
@@ -369,7 +373,7 @@ function getHtml() {
         const name = (document.getElementById('name-' + id)?.value || '').trim();
         if (!name) return null;
         const canvas = document.getElementById('canvas-' + id);
-        const sig = canvas ? canvas.toDataURL('image/png') : '';
+        const sig = (canvas && canvas.classList.contains('signed')) ? canvas.toDataURL('image/png') : '';
         return { name, sig };
       })
       .filter(Boolean);
