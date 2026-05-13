@@ -1,4 +1,4 @@
-var VERSION       = "01.06g";
+var VERSION       = "01.07g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -479,6 +479,7 @@ function getHtml() {
           doClearAll();
           btn.disabled = false;
           btn.textContent = 'Save';
+          setFieldsDisabled(false);
           document.getElementById('submit-status').className = 'submit-status';
         }, 1800);
       })
