@@ -1,4 +1,4 @@
-var VERSION       = "01.09g";
+var VERSION       = "01.10g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -121,8 +121,12 @@ function saveData(topic, date, entries) {
         var fileName = safeName + ' — ' + date + '.png';
         var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/png', fileName);
         var file = folder.createFile(blob);
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
         sigLink = file.getUrl();
+        try {
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (shareErr) {
+          Logger.log('setSharing failed for ' + name + ': ' + shareErr.message);
+        }
       } catch (sigErr) {
         Logger.log('Signature save failed for ' + name + ': ' + sigErr.message);
       }
