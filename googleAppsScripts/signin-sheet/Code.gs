@@ -1,4 +1,4 @@
-var VERSION       = "01.15g";
+var VERSION       = "01.16g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -103,7 +103,7 @@ function pullAndDeployFromGitHub() {
   return "Updated to " + pulledVersion + " (deployment " + newVersion + ")";
 }
 
-function saveData(topic, date, location, entries) {
+function saveData(topic, date, location, entries, photos) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
 
@@ -135,6 +135,35 @@ function saveData(topic, date, location, entries) {
     sheet.appendRow([date, topic, location, name, new Date().toLocaleString(), sigLink]);
   });
 
+  var photoResults = [];
+  if (photos && photos.length) {
+    var photoSheet = ss.getSheetByName("Photos");
+    if (!photoSheet) {
+      photoSheet = ss.insertSheet("Photos");
+      photoSheet.appendRow(["Date", "Topic", "Location", "Filename", "Drive Link"]);
+    }
+    photos.forEach(function(photo) {
+      try {
+        var base64 = photo.data.replace(/^data:image\/[a-z+]+;base64,/, '');
+        var blob = Utilities.newBlob(Utilities.base64Decode(base64), 'image/jpeg', photo.name);
+        var meta = { name: photo.name };
+        if (SIGNATURE_FOLDER_ID) meta.parents = [SIGNATURE_FOLDER_ID];
+        var created = Drive.Files.create(meta, blob, { fields: 'id,webViewLink' });
+        var link = created.webViewLink || ('https://drive.google.com/file/d/' + created.id + '/view');
+        try {
+          Drive.Permissions.create({ role: 'reader', type: 'anyone' }, created.id);
+        } catch (shareErr) {
+          Logger.log('Photo share failed for ' + photo.name + ': ' + shareErr.message);
+        }
+        photoSheet.appendRow([date, topic, location, photo.name, link]);
+        photoResults.push({ name: photo.name, link: link, id: created.id });
+      } catch (photoErr) {
+        Logger.log('Photo upload failed for ' + photo.name + ': ' + photoErr.message);
+        photoResults.push({ name: photo.name, error: photoErr.message });
+      }
+    });
+  }
+
   var savedAt = new Date().toLocaleString();
   PropertiesService.getScriptProperties().setProperties({
     lastSavedAt: savedAt,
@@ -143,7 +172,7 @@ function saveData(topic, date, location, entries) {
     lastDate: date,
     lastCount: entries.length.toString()
   });
-  return { savedAt: savedAt, sigErrors: sigErrors };
+  return { savedAt: savedAt, sigErrors: sigErrors, photoResults: photoResults };
 }
 
 function getLastSaved() {
@@ -248,6 +277,29 @@ function getHtml() {
   .confirm-ok:hover { opacity: 0.88; }
   .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; font-size: 13px; padding: 10px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; z-index: 300; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* Photos section */
+  .photos-card { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; margin-top: 16px; animation: rise 0.4s ease both; }
+  .photos-card-header { padding: 14px 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+  .photos-card-title { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .add-photo-label { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 6px 14px; background: var(--accent); color: #fff; border-radius: var(--radius); cursor: pointer; transition: opacity 0.15s; display: inline-block; }
+  .add-photo-label:hover { opacity: 0.85; }
+  .add-photo-label.disabled { opacity: 0.45; pointer-events: none; }
+  .photo-drop-zone { padding: 18px 32px 22px; }
+  .photo-drop-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; border: 1.5px dashed var(--paper-dark); border-radius: var(--radius); color: var(--ink-faint); font-size: 13px; text-align: center; }
+  .photo-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .photo-preview-card { position: relative; border-radius: var(--radius); overflow: hidden; background: var(--paper-mid); aspect-ratio: 1; }
+  .photo-preview-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-remove-btn { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.55); color: #fff; border: none; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .photo-remove-btn:hover { background: rgba(192,57,43,0.85); }
+  .photo-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 6px; background: rgba(0,0,0,0.45); color: #fff; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .photo-results { padding: 14px 32px 20px; border-top: 1px solid var(--line); }
+  .photo-results-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 12px; }
+  .photo-result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .photo-result-card { border-radius: var(--radius); overflow: hidden; background: var(--paper-mid); aspect-ratio: 1; display: block; text-decoration: none; position: relative; }
+  .photo-result-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.15s; }
+  .photo-result-card:hover img { opacity: 0.82; }
+  .photo-result-name { position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 6px; background: rgba(0,0,0,0.45); color: #fff; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .photo-result-error { aspect-ratio: 1; border-radius: var(--radius); background: #fdecea; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #b03030; text-align: center; padding: 8px; }
   @media (max-width: 560px) {
     .page { padding: 20px 10px 60px; }
     .sheet-header, .logo-area { padding-left: 18px; padding-right: 18px; }
@@ -255,6 +307,7 @@ function getHtml() {
     .topbar { padding: 0 16px; }
     .topic-input { font-size: 20px; }
     .confirm-box { width: 92vw; padding: 22px 18px 18px; }
+    .photos-card-header, .photo-drop-zone, .photo-results { padding-left: 18px; padding-right: 18px; }
   }
   .gas-version-pill {
     position: fixed; bottom: 8px; left: 8px; z-index: 9999;
@@ -303,6 +356,22 @@ function getHtml() {
     <div class="sheet-footer">
       <span class="count-text" id="count">0 attendees</span>
     </div>
+  </div>
+
+  <div class="photos-card">
+    <div class="photos-card-header">
+      <span class="photos-card-title">Photos</span>
+      <label class="add-photo-label" id="add-photo-label" for="photo-input">+ Add Photos</label>
+      <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this)">
+    </div>
+    <div class="photo-drop-zone">
+      <div class="photo-drop-empty" id="photo-empty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Tap <strong>+ Add Photos</strong> to attach images</span>
+      </div>
+      <div class="photo-previews" id="photo-previews" style="display:none"></div>
+    </div>
+    <div class="photo-results" id="photo-results" style="display:none"></div>
   </div>
 
   <div class="save-wrap">
@@ -443,6 +512,9 @@ function getHtml() {
     document.getElementById('topic').disabled = disabled;
     document.getElementById('sheet-date').disabled = disabled;
     document.getElementById('location').disabled = disabled;
+    document.getElementById('photo-input').disabled = disabled;
+    var lbl = document.getElementById('add-photo-label');
+    if (lbl) { if (disabled) lbl.classList.add('disabled'); else lbl.classList.remove('disabled'); }
     rows.forEach(id => {
       const inp = document.getElementById('name-' + id);
       const btn = document.getElementById('rm-' + id);
@@ -469,6 +541,7 @@ function getHtml() {
     addRow(false); addRow(false); addRow(false);
     updateCount();
     document.getElementById('submit-status').className = 'submit-status';
+    clearPhotos();
     showToast('Sheet cleared');
   }
 
@@ -486,6 +559,7 @@ function getHtml() {
     const topic    = document.getElementById('topic').value.trim() || 'Untitled';
     const date     = document.getElementById('sheet-date').value;
     const location = document.getElementById('location').value.trim();
+    const photos   = selectedPhotos.map(function(p) { return { name: p.name, data: p.dataUrl }; });
     const btn   = document.getElementById('save-btn');
 
     btn.disabled = true;
@@ -497,6 +571,7 @@ function getHtml() {
       .withSuccessHandler(function(result) {
         var savedAt = result.savedAt || result;
         var sigErrors = result.sigErrors || [];
+        var photoResults = result.photoResults || [];
         btn.innerHTML = '&#10003; Saved!';
         if (sigErrors.length) {
           showStatus('warn', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved. Signature upload failed: ' + sigErrors[0]);
@@ -504,6 +579,9 @@ function getHtml() {
           showStatus('ok', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved successfully.');
         }
         setLastSaved(savedAt, topic, entries.length);
+        selectedPhotos = [];
+        renderPhotoPreviews();
+        showPhotoResults(photoResults);
         setTimeout(function() {
           var hadSigError = sigErrors.length > 0;
           var warnText = hadSigError ? document.getElementById('submit-status').textContent : '';
@@ -524,7 +602,7 @@ function getHtml() {
         btn.textContent = 'Save';
         showStatus('err', 'Unable to save. Please check your connection and try again.');
       })
-      .saveData(topic, date, location, entries);
+      .saveData(topic, date, location, entries, photos);
   }
 
   function showStatus(type, msg) {
@@ -554,6 +632,78 @@ function getHtml() {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ── Photos ──
+  var selectedPhotos = [];
+
+  function handlePhotoSelect(input) {
+    var files = Array.from(input.files);
+    if (!files.length) return;
+    var pending = files.length;
+    files.forEach(function(file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        selectedPhotos.push({ name: file.name, dataUrl: e.target.result });
+        pending--;
+        if (pending === 0) renderPhotoPreviews();
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  function removePhoto(idx) {
+    selectedPhotos.splice(idx, 1);
+    renderPhotoPreviews();
+  }
+
+  function renderPhotoPreviews() {
+    var container = document.getElementById('photo-previews');
+    var empty = document.getElementById('photo-empty');
+    if (!selectedPhotos.length) {
+      container.style.display = 'none';
+      empty.style.display = 'flex';
+      container.innerHTML = '';
+      return;
+    }
+    empty.style.display = 'none';
+    container.style.display = 'grid';
+    container.innerHTML = selectedPhotos.map(function(p, i) {
+      return '<div class="photo-preview-card">' +
+        '<img src="' + p.dataUrl + '" alt="">' +
+        '<button class="photo-remove-btn" onclick="removePhoto(' + i + ')" title="Remove">×</button>' +
+        '<div class="photo-caption">' + p.name + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function clearPhotos() {
+    selectedPhotos = [];
+    renderPhotoPreviews();
+    var r = document.getElementById('photo-results');
+    r.style.display = 'none';
+    r.innerHTML = '';
+  }
+
+  function showPhotoResults(photoResults) {
+    if (!photoResults || !photoResults.length) return;
+    var el = document.getElementById('photo-results');
+    var html = '<div class="photo-results-label">Uploaded Photos</div><div class="photo-result-grid">';
+    photoResults.forEach(function(p) {
+      if (p.error) {
+        html += '<div class="photo-result-error">Failed: ' + p.name + '</div>';
+      } else {
+        var thumb = 'https://drive.google.com/thumbnail?id=' + p.id + '&sz=w200';
+        html += '<a class="photo-result-card" href="' + p.link + '" target="_blank" rel="noopener">' +
+          '<img src="' + thumb + '" alt="">' +
+          '<div class="photo-result-name">' + p.name + '</div>' +
+          '</a>';
+      }
+    });
+    html += '</div>';
+    el.innerHTML = html;
+    el.style.display = 'block';
   }
 
   addRow(false); addRow(false); addRow(false);
