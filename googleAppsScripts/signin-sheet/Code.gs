@@ -1,4 +1,4 @@
-var VERSION       = "01.11g";
+var VERSION       = "01.12g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -492,11 +492,15 @@ function getHtml() {
         }
         setLastSaved(savedAt, topic, entries.length);
         setTimeout(function() {
+          var hadSigError = sigErrors.length > 0;
           doClearAll();
+          document.getElementById('topic').value = '';
           btn.disabled = false;
           btn.textContent = 'Save';
           setFieldsDisabled(false);
-          document.getElementById('submit-status').className = 'submit-status';
+          if (!hadSigError) {
+            document.getElementById('submit-status').className = 'submit-status';
+          }
         }, 1800);
       })
       .withFailureHandler(function(err) {
