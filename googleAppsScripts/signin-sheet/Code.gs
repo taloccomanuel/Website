@@ -1,4 +1,4 @@
-var VERSION       = "01.04g";
+var VERSION       = "01.05g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
