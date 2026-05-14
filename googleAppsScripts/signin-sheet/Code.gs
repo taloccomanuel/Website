@@ -1,4 +1,4 @@
-var VERSION       = "01.23g";
+var VERSION       = "01.24g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -414,7 +414,6 @@ function getHtml() {
 
 <div class="toast" id="toast"></div>
 
-<script>document.getElementById('js-error-banner').textContent='tiny-script-ok';</script>
 <script>
   document.getElementById('js-error-banner').textContent = 'JS OK - loading...';
 
@@ -423,18 +422,18 @@ function getHtml() {
     if (el) el.textContent = 'JS error: ' + msg + ' (line ' + line + ')';
   };
 
-  let rows = [], rid = 0;
+  var rows = [], rid = 0;
 
   document.getElementById('sheet-date').value = new Date().toISOString().split('T')[0];
 
   function hasBlankRow() {
-    return rows.some(id => !((document.getElementById('name-' + id) || {}).value || '').trim());
+    return rows.some(function(id) { return !((document.getElementById('name-' + id) || {}).value || '').trim(); });
   }
 
   function addRow(focus) {
-    const id = ++rid;
+    var id = ++rid;
     rows.push(id);
-    const el = document.createElement('div');
+    var el = document.createElement('div');
     el.className = 'entry-row';
     el.id = 'row-' + id;
     el.innerHTML =
@@ -451,67 +450,67 @@ function getHtml() {
     initCanvas(id);
     reNumber();
     updateCount();
-    if (focus) setTimeout(function() { var el = document.getElementById('name-' + id); if (el) el.focus(); }, 50);
+    if (focus) setTimeout(function() { var fe = document.getElementById('name-' + id); if (fe) fe.focus(); }, 50);
   }
 
   function onNameInput(id) {
     updateCount();
-    const val = ((document.getElementById('name-' + id) || {}).value || '').trim();
+    var val = ((document.getElementById('name-' + id) || {}).value || '').trim();
     if (val && !hasBlankRow()) addRow(false);
   }
 
   function removeRow(id) {
     var _rr = document.getElementById('row-' + id); if (_rr) _rr.remove();
-    rows = rows.filter(r => r !== id);
+    rows = rows.filter(function(r) { return r !== id; });
     reNumber();
     updateCount();
     if (!hasBlankRow()) addRow(false);
   }
 
   function reNumber() {
-    rows.forEach((id, i) => {
-      const el = document.getElementById('num-' + id);
+    rows.forEach(function(id, i) {
+      var el = document.getElementById('num-' + id);
       if (el) el.textContent = i + 1;
     });
   }
 
   function updateCount() {
-    const n = rows.filter(id => ((document.getElementById('name-' + id) || {}).value || '').trim()).length;
+    var n = rows.filter(function(id) { return ((document.getElementById('name-' + id) || {}).value || '').trim(); }).length;
     document.getElementById('count').textContent = n + (n === 1 ? ' attendee' : ' attendees');
   }
 
   function getFilledEntries() {
     return rows
-      .map(id => {
-        const name = ((document.getElementById('name-' + id) || {}).value || '').trim();
+      .map(function(id) {
+        var name = ((document.getElementById('name-' + id) || {}).value || '').trim();
         if (!name) return null;
-        const canvas = document.getElementById('canvas-' + id);
-        const sig = (canvas && canvas.classList.contains('signed')) ? canvas.toDataURL('image/png') : '';
-        return { name, sig };
+        var canvas = document.getElementById('canvas-' + id);
+        var sig = (canvas && canvas.classList.contains('signed')) ? canvas.toDataURL('image/png') : '';
+        return { name: name, sig: sig };
       })
       .filter(Boolean);
   }
 
   function initCanvas(id) {
-    const canvas = document.getElementById('canvas-' + id);
-    const rect = canvas.getBoundingClientRect();
+    var canvas = document.getElementById('canvas-' + id);
+    var rect = canvas.getBoundingClientRect();
     canvas.width = Math.round(rect.width) || 280;
     canvas.height = 52;
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
+    var ctx = canvas.getContext('2d');
+    var drawing = false;
     function getPos(e) {
-      const r = canvas.getBoundingClientRect();
-      const src = e.touches ? e.touches[0] : e;
+      var r = canvas.getBoundingClientRect();
+      var src = e.touches ? e.touches[0] : e;
       return {
         x: (src.clientX - r.left) * (canvas.width / r.width),
         y: (src.clientY - r.top) * (canvas.height / r.height)
       };
     }
-    function start(e) { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function start(e) { e.preventDefault(); drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
     function draw(e) {
       if (!drawing) return;
       e.preventDefault();
-      const p = getPos(e);
+      var p = getPos(e);
       ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.strokeStyle = '#1a1a18';
       ctx.lineTo(p.x, p.y); ctx.stroke();
@@ -528,9 +527,9 @@ function getHtml() {
   }
 
   function clearCanvas(id) {
-    const canvas = document.getElementById('canvas-' + id);
+    var canvas = document.getElementById('canvas-' + id);
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas.classList.remove('signed');
   }
@@ -539,13 +538,13 @@ function getHtml() {
     document.getElementById('topic').disabled = disabled;
     document.getElementById('sheet-date').disabled = disabled;
     document.getElementById('location').disabled = disabled;
-    rows.forEach(id => {
-      const inp = document.getElementById('name-' + id);
-      const btn = document.getElementById('rm-' + id);
-      const clr = document.getElementById('clr-' + id);
-      const cvs = document.getElementById('canvas-' + id);
+    rows.forEach(function(id) {
+      var inp = document.getElementById('name-' + id);
+      var rbtn = document.getElementById('rm-' + id);
+      var clr = document.getElementById('clr-' + id);
+      var cvs = document.getElementById('canvas-' + id);
       if (inp) inp.disabled = disabled;
-      if (btn) btn.disabled = disabled;
+      if (rbtn) rbtn.disabled = disabled;
       if (clr) clr.disabled = disabled;
       if (cvs) cvs.style.pointerEvents = disabled ? 'none' : '';
     });
@@ -575,16 +574,16 @@ function getHtml() {
 
   /* -- Save -- */
   function sendToSheets() {
-    const entries = getFilledEntries();
+    var entries = getFilledEntries();
     if (!entries.length) {
       showStatus('err', 'Please add at least one name before saving.');
       return;
     }
-    const topic       = document.getElementById('topic').value.trim() || 'Untitled';
-    const date        = document.getElementById('sheet-date').value;
-    const location    = document.getElementById('location').value.trim();
-    const quizAnswers = getQuizAnswers();
-    const btn   = document.getElementById('save-btn');
+    var topic       = document.getElementById('topic').value.trim() || 'Untitled';
+    var date        = document.getElementById('sheet-date').value;
+    var location    = document.getElementById('location').value.trim();
+    var quizAnswers = getQuizAnswers();
+    var btn   = document.getElementById('save-btn');
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Saving&hellip;';
@@ -608,7 +607,7 @@ function getHtml() {
           doClearAll();
           document.getElementById('topic').value = '';
           document.getElementById('location').value = '';
-          _hazardPhotos.forEach(function(p, i) { var el = document.getElementById('obs-' + i); if (el) el.value = ''; });
+          _hazardPhotos.forEach(function(p, i) { var oel = document.getElementById('obs-' + i); if (oel) oel.value = ''; });
           btn.disabled = false;
           btn.textContent = 'Save';
           setFieldsDisabled(false);
@@ -627,13 +626,13 @@ function getHtml() {
   }
 
   function showStatus(type, msg) {
-    const el = document.getElementById('submit-status');
+    var el = document.getElementById('submit-status');
     el.className = 'submit-status ' + type;
     el.textContent = msg;
   }
 
   function setLastSaved(savedAt, topic, count) {
-    const el = document.getElementById('last-saved');
+    var el = document.getElementById('last-saved');
     if (!el || !savedAt) return;
     el.innerHTML = 'Last saved: <strong>' + savedAt + '</strong> &nbsp;&middot;&nbsp; ' +
       count + ' record' + (Number(count) !== 1 ? 's' : '') +
@@ -649,10 +648,10 @@ function getHtml() {
   }
 
   function showToast(msg) {
-    const t = document.getElementById('toast');
+    var t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2400);
+    setTimeout(function() { t.classList.remove('show'); }, 2400);
   }
 
   // -- Hazard quiz --
@@ -755,8 +754,8 @@ function getHtml() {
     var banner = document.getElementById('js-error-banner');
     if (banner) banner.textContent = 'rows=' + rows.length + ' children=' + (entriesEl ? entriesEl.children.length : 'no-el') + ' html=' + (entriesEl ? entriesEl.innerHTML.substring(0,60) : 'none');
   } catch(e) {
-    var banner = document.getElementById('js-error-banner');
-    if (banner) banner.textContent = 'addRow error: ' + e.message + ' at ' + e.stack;
+    var banner2 = document.getElementById('js-error-banner');
+    if (banner2) banner2.textContent = 'addRow error: ' + e.message;
   }
   loadLastSaved();
   loadHazardPhotos();
