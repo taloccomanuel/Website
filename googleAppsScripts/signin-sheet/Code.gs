@@ -1,4 +1,4 @@
-var VERSION       = "01.15g";
+var VERSION       = "01.16g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -103,7 +103,7 @@ function pullAndDeployFromGitHub() {
   return "Updated to " + pulledVersion + " (deployment " + newVersion + ")";
 }
 
-function saveData(topic, date, location, entries) {
+function saveData(topic, date, location, entries, quizAnswers) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName("Data") || ss.getSheets()[0];
 
@@ -135,6 +135,18 @@ function saveData(topic, date, location, entries) {
     sheet.appendRow([date, topic, location, name, new Date().toLocaleString(), sigLink]);
   });
 
+  if (quizAnswers && quizAnswers.length) {
+    var quizSheet = ss.getSheetByName("Hazard Quiz");
+    if (!quizSheet) {
+      quizSheet = ss.insertSheet("Hazard Quiz");
+      quizSheet.appendRow(["Date", "Topic", "Location", "Photo #", "Caption", "Observation", "Submitted At"]);
+    }
+    var submittedAt = new Date().toLocaleString();
+    quizAnswers.forEach(function(a, i) {
+      quizSheet.appendRow([date, topic, location, i + 1, a.caption || '', a.observation || '', submittedAt]);
+    });
+  }
+
   var savedAt = new Date().toLocaleString();
   PropertiesService.getScriptProperties().setProperties({
     lastSavedAt: savedAt,
@@ -144,6 +156,21 @@ function saveData(topic, date, location, entries) {
     lastCount: entries.length.toString()
   });
   return { savedAt: savedAt, sigErrors: sigErrors };
+}
+
+function getHazardPhotos() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName("Hazard Photos");
+  if (!sheet) return [];
+  var data = sheet.getDataRange().getValues();
+  var photos = [];
+  data.forEach(function(row, i) {
+    if (i === 0) return;
+    var url = (row[0] || '').toString().trim();
+    var caption = (row[1] || '').toString().trim();
+    if (url) photos.push({ url: url, caption: caption });
+  });
+  return photos;
 }
 
 function getLastSaved() {
@@ -248,6 +275,40 @@ function getHtml() {
   .confirm-ok:hover { opacity: 0.88; }
   .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; font-size: 13px; padding: 10px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; z-index: 300; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* Hazard quiz card */
+  .quiz-card { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; margin-top: 16px; animation: rise 0.4s ease both; }
+  .quiz-card-header { padding: 16px 32px; border-bottom: 1px solid var(--line); background: #fff3f2; display: flex; align-items: center; gap: 10px; }
+  .quiz-card-icon { color: #c0392b; flex-shrink: 0; }
+  .quiz-card-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #1a1a18; }
+  .quiz-card-sub { font-size: 12px; color: var(--ink-muted); margin-left: auto; flex-shrink: 0; }
+  .quiz-loading { padding: 28px 32px; text-align: center; font-size: 13px; color: var(--ink-faint); }
+  .quiz-items { padding: 20px 32px 28px; display: flex; flex-direction: column; gap: 28px; }
+  .quiz-item { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-item-top { display: flex; gap: 14px; align-items: flex-start; }
+  .quiz-photo-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #c0392b; color: #fff; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+  .quiz-photo-wrap { flex: 1; border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; background: var(--paper-mid); }
+  .quiz-photo-wrap img { width: 100%; max-height: 260px; object-fit: cover; display: block; transition: opacity 0.15s; }
+  .quiz-photo-wrap:hover img { opacity: 0.88; }
+  .quiz-expand-hint { position: absolute; bottom: 6px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; pointer-events: none; }
+  .quiz-caption { font-size: 12px; color: var(--ink-muted); margin-left: 42px; font-style: italic; }
+  .quiz-obs-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); margin-left: 42px; margin-bottom: 4px; }
+  .quiz-obs { width: 100%; margin-left: 0; font-family: 'DM Sans', sans-serif; font-size: 14px; border: 1px solid var(--paper-dark); border-radius: var(--radius); padding: 10px 12px; background: var(--paper); color: var(--ink); resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
+  .quiz-obs:focus { border-color: var(--accent); background: #fff; }
+  .quiz-obs:disabled { opacity: 0.5; cursor: not-allowed; }
+  .quiz-obs::placeholder { color: var(--ink-faint); }
+  /* Lightbox */
+  .lb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+  .lb-overlay.open { display: flex; }
+  .lb-inner { position: relative; max-width: min(92vw, 900px); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .lb-img { max-width: 100%; max-height: calc(90vh - 60px); border-radius: var(--radius); object-fit: contain; display: block; }
+  .lb-caption { color: rgba(255,255,255,0.72); font-size: 13px; text-align: center; max-width: 600px; }
+  .lb-close { position: absolute; top: -40px; right: 0; background: none; border: none; color: rgba(255,255,255,0.7); font-size: 32px; cursor: pointer; line-height: 1; padding: 0; }
+  .lb-close:hover { color: #fff; }
+  .lb-counter { position: absolute; top: -38px; left: 0; color: rgba(255,255,255,0.5); font-size: 12px; }
+  .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 26px; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .lb-nav:hover { background: rgba(255,255,255,0.28); }
+  .lb-prev { left: -58px; }
+  .lb-next { right: -58px; }
   @media (max-width: 560px) {
     .page { padding: 20px 10px 60px; }
     .sheet-header, .logo-area { padding-left: 18px; padding-right: 18px; }
@@ -255,6 +316,9 @@ function getHtml() {
     .topbar { padding: 0 16px; }
     .topic-input { font-size: 20px; }
     .confirm-box { width: 92vw; padding: 22px 18px 18px; }
+    .quiz-card-header, .quiz-items { padding-left: 18px; padding-right: 18px; }
+    .lb-prev { left: -46px; }
+    .lb-next { right: -46px; }
   }
   .gas-version-pill {
     position: fixed; bottom: 8px; left: 8px; z-index: 9999;
@@ -302,6 +366,29 @@ function getHtml() {
     <div class="entries" id="entries"></div>
     <div class="sheet-footer">
       <span class="count-text" id="count">0 attendees</span>
+    </div>
+  </div>
+
+  <!-- Hazard Identification Quiz (shown when photos are loaded) -->
+  <div class="quiz-card" id="quiz-card" style="display:none">
+    <div class="quiz-card-header">
+      <svg class="quiz-card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span class="quiz-card-title">Hazard Identification</span>
+      <span class="quiz-card-sub" id="quiz-photo-count"></span>
+    </div>
+    <div class="quiz-loading" id="quiz-loading">Loading photos&hellip;</div>
+    <div class="quiz-items" id="quiz-items" style="display:none"></div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lb-overlay" id="lb-overlay" onclick="lbClickOutside(event)">
+    <div class="lb-inner">
+      <span class="lb-counter" id="lb-counter"></span>
+      <button class="lb-close" onclick="lbClose()">&#215;</button>
+      <img class="lb-img" id="lb-img" src="" alt="">
+      <div class="lb-caption" id="lb-caption"></div>
+      <button class="lb-nav lb-prev" id="lb-prev" onclick="lbNav(-1)">&#8249;</button>
+      <button class="lb-nav lb-next" id="lb-next" onclick="lbNav(1)">&#8250;</button>
     </div>
   </div>
 
@@ -453,6 +540,7 @@ function getHtml() {
       if (clr) clr.disabled = disabled;
       if (cvs) cvs.style.pointerEvents = disabled ? 'none' : '';
     });
+    setQuizDisabled(disabled);
   }
 
   /* ── Clear All ── */
@@ -483,9 +571,10 @@ function getHtml() {
       showStatus('err', 'Please add at least one name before saving.');
       return;
     }
-    const topic    = document.getElementById('topic').value.trim() || 'Untitled';
-    const date     = document.getElementById('sheet-date').value;
-    const location = document.getElementById('location').value.trim();
+    const topic       = document.getElementById('topic').value.trim() || 'Untitled';
+    const date        = document.getElementById('sheet-date').value;
+    const location    = document.getElementById('location').value.trim();
+    const quizAnswers = getQuizAnswers();
     const btn   = document.getElementById('save-btn');
 
     btn.disabled = true;
@@ -510,6 +599,7 @@ function getHtml() {
           doClearAll();
           document.getElementById('topic').value = '';
           document.getElementById('location').value = '';
+          _hazardPhotos.forEach(function(p, i) { var el = document.getElementById('obs-' + i); if (el) el.value = ''; });
           btn.disabled = false;
           btn.textContent = 'Save';
           setFieldsDisabled(false);
@@ -524,7 +614,7 @@ function getHtml() {
         btn.textContent = 'Save';
         showStatus('err', 'Unable to save. Please check your connection and try again.');
       })
-      .saveData(topic, date, location, entries);
+      .saveData(topic, date, location, entries, quizAnswers);
   }
 
   function showStatus(type, msg) {
@@ -556,8 +646,103 @@ function getHtml() {
     setTimeout(() => t.classList.remove('show'), 2400);
   }
 
+  // ── Hazard quiz ──
+  var _hazardPhotos = [];
+  var _lbIdx = 0;
+
+  function driveThumbUrl(url, size) {
+    var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=' + (size || 'w800') : url;
+  }
+
+  function loadHazardPhotos() {
+    google.script.run
+      .withSuccessHandler(function(photos) {
+        _hazardPhotos = photos || [];
+        var card = document.getElementById('quiz-card');
+        var loading = document.getElementById('quiz-loading');
+        var items = document.getElementById('quiz-items');
+        var countEl = document.getElementById('quiz-photo-count');
+        if (!_hazardPhotos.length) { return; }
+        card.style.display = 'block';
+        countEl.textContent = _hazardPhotos.length + ' photo' + (_hazardPhotos.length !== 1 ? 's' : '');
+        items.innerHTML = _hazardPhotos.map(function(p, i) {
+          var thumb = driveThumbUrl(p.url, 'w800');
+          var cap = p.caption ? '<div class="quiz-caption">' + p.caption + '</div>' : '';
+          var obsLabel = '<div class="quiz-obs-label">What C8 hazards do you see?</div>';
+          var obsField = '<textarea class="quiz-obs" id="obs-' + i + '" placeholder="Describe the hazards you observe in this photo…" rows="3"></textarea>';
+          return '<div class="quiz-item">' +
+            '<div class="quiz-item-top">' +
+              '<div class="quiz-photo-num">' + (i + 1) + '</div>' +
+              '<div class="quiz-photo-wrap" onclick="lbOpen(' + i + ')">' +
+                '<img src="' + thumb + '" alt="" loading="lazy">' +
+                '<div class="quiz-expand-hint">Tap to enlarge</div>' +
+              '</div>' +
+            '</div>' +
+            cap + obsLabel + obsField +
+            '</div>';
+        }).join('');
+        loading.style.display = 'none';
+        items.style.display = 'flex';
+      })
+      .withFailureHandler(function() {
+        document.getElementById('quiz-loading').textContent = 'Could not load photos.';
+      })
+      .getHazardPhotos();
+  }
+
+  function getQuizAnswers() {
+    return _hazardPhotos.map(function(p, i) {
+      var el = document.getElementById('obs-' + i);
+      return { caption: p.caption, observation: el ? el.value.trim() : '' };
+    });
+  }
+
+  function setQuizDisabled(disabled) {
+    _hazardPhotos.forEach(function(p, i) {
+      var el = document.getElementById('obs-' + i);
+      if (el) el.disabled = disabled;
+    });
+  }
+
+  function lbOpen(idx) {
+    _lbIdx = idx;
+    lbRender();
+    document.getElementById('lb-overlay').classList.add('open');
+  }
+
+  function lbClose() {
+    document.getElementById('lb-overlay').classList.remove('open');
+  }
+
+  function lbNav(dir) {
+    _lbIdx = (_lbIdx + dir + _hazardPhotos.length) % _hazardPhotos.length;
+    lbRender();
+  }
+
+  function lbRender() {
+    var p = _hazardPhotos[_lbIdx];
+    document.getElementById('lb-img').src = driveThumbUrl(p.url, 'w1200');
+    document.getElementById('lb-caption').textContent = p.caption || '';
+    document.getElementById('lb-counter').textContent = (_lbIdx + 1) + ' / ' + _hazardPhotos.length;
+    document.getElementById('lb-prev').style.display = _hazardPhotos.length > 1 ? '' : 'none';
+    document.getElementById('lb-next').style.display = _hazardPhotos.length > 1 ? '' : 'none';
+  }
+
+  function lbClickOutside(e) {
+    if (e.target === document.getElementById('lb-overlay')) lbClose();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('lb-overlay').classList.contains('open')) return;
+    if (e.key === 'ArrowRight') lbNav(1);
+    else if (e.key === 'ArrowLeft') lbNav(-1);
+    else if (e.key === 'Escape') lbClose();
+  });
+
   addRow(false); addRow(false); addRow(false);
   loadLastSaved();
+  loadHazardPhotos();
 </script>
 <div class="gas-version-pill">v${VERSION}</div>
 </body>
