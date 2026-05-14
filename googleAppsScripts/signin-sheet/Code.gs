@@ -1,4 +1,4 @@
-var VERSION       = "01.22g";
+var VERSION       = "01.23g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -428,7 +428,7 @@ function getHtml() {
   document.getElementById('sheet-date').value = new Date().toISOString().split('T')[0];
 
   function hasBlankRow() {
-    return rows.some(id => !(document.getElementById('name-' + id)?.value || '').trim());
+    return rows.some(id => !((document.getElementById('name-' + id) || {}).value || '').trim());
   }
 
   function addRow(focus) {
@@ -451,17 +451,17 @@ function getHtml() {
     initCanvas(id);
     reNumber();
     updateCount();
-    if (focus) setTimeout(() => document.getElementById('name-' + id)?.focus(), 50);
+    if (focus) setTimeout(function() { var el = document.getElementById('name-' + id); if (el) el.focus(); }, 50);
   }
 
   function onNameInput(id) {
     updateCount();
-    const val = (document.getElementById('name-' + id)?.value || '').trim();
+    const val = ((document.getElementById('name-' + id) || {}).value || '').trim();
     if (val && !hasBlankRow()) addRow(false);
   }
 
   function removeRow(id) {
-    document.getElementById('row-' + id)?.remove();
+    var _rr = document.getElementById('row-' + id); if (_rr) _rr.remove();
     rows = rows.filter(r => r !== id);
     reNumber();
     updateCount();
@@ -476,14 +476,14 @@ function getHtml() {
   }
 
   function updateCount() {
-    const n = rows.filter(id => (document.getElementById('name-' + id)?.value || '').trim()).length;
+    const n = rows.filter(id => ((document.getElementById('name-' + id) || {}).value || '').trim()).length;
     document.getElementById('count').textContent = n + (n === 1 ? ' attendee' : ' attendees');
   }
 
   function getFilledEntries() {
     return rows
       .map(id => {
-        const name = (document.getElementById('name-' + id)?.value || '').trim();
+        const name = ((document.getElementById('name-' + id) || {}).value || '').trim();
         if (!name) return null;
         const canvas = document.getElementById('canvas-' + id);
         const sig = (canvas && canvas.classList.contains('signed')) ? canvas.toDataURL('image/png') : '';
