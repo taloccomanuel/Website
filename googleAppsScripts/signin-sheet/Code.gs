@@ -1,4 +1,4 @@
-var VERSION       = "01.20g";
+var VERSION       = "01.21g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -18,7 +18,7 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  // ⚠️ CRITICAL: Do NOT add authentication, secret checks, or any guards to the deploy action.
+  // WARNING: Do NOT add authentication, secret checks, or any guards to the deploy action.
   // The GitHub Actions workflow calls doPost(action=deploy) via webhook to trigger GAS self-update.
   // Adding auth here will silently break auto-updates.
   var action = (e && e.parameter && e.parameter.action) || "";
@@ -49,7 +49,7 @@ function pullAndDeployFromGitHub() {
     + "?ref=" + GITHUB_BRANCH + "&t=" + new Date().getTime();
   var fetchHeaders = { "Accept": "application/vnd.github.v3.raw" };
   if (GITHUB_TOKEN) fetchHeaders["Authorization"] = "token " + GITHUB_TOKEN;
-  var newCode = UrlFetchApp.fetch(apiUrl, { headers: fetchHeaders }).getContentText();
+  var newCode = UrlFetchApp.fetch(apiUrl, { headers: fetchHeaders }).getContentText('UTF-8');
 
   var versionMatch  = newCode.match(/var VERSION\s*=\s*"([^"]+)"/);
   var pulledVersion = versionMatch ? versionMatch[1] : null;
@@ -80,7 +80,7 @@ function pullAndDeployFromGitHub() {
     contentType: "application/json",
     headers: { "Authorization": "Bearer " + ScriptApp.getOAuthToken() },
     payload: JSON.stringify({
-      description: pulledVersion + " — from GitHub " + new Date().toLocaleString()
+      description: pulledVersion + " - from GitHub " + new Date().toLocaleString()
     })
   });
   var newVersion = JSON.parse(versionResponse.getContentText()).versionNumber;
@@ -551,7 +551,7 @@ function getHtml() {
     setQuizDisabled(disabled);
   }
 
-  /* ── Clear All ── */
+  /* -- Clear All -- */
   function openClearConfirm() {
     document.getElementById('confirm-overlay').classList.add('open');
   }
@@ -572,7 +572,7 @@ function getHtml() {
     if (e.target === this) closeClearConfirm();
   });
 
-  /* ── Save ── */
+  /* -- Save -- */
   function sendToSheets() {
     const entries = getFilledEntries();
     if (!entries.length) {
@@ -654,7 +654,7 @@ function getHtml() {
     setTimeout(() => t.classList.remove('show'), 2400);
   }
 
-  // ── Hazard quiz ──
+  // -- Hazard quiz --
   var _hazardPhotos = [];
   var _lbIdx = 0;
 
@@ -678,7 +678,7 @@ function getHtml() {
           var thumb = driveThumbUrl(p.url, 'w800');
           var cap = p.caption ? '<div class="quiz-caption">' + p.caption + '</div>' : '';
           var obsLabel = '<div class="quiz-obs-label">What C8 hazards do you see?</div>';
-          var obsField = '<textarea class="quiz-obs" id="obs-' + i + '" placeholder="Describe the hazards you observe in this photo…" rows="3"></textarea>';
+          var obsField = '<textarea class="quiz-obs" id="obs-' + i + '" placeholder="Describe the hazards you observe in this photo..." rows="3"></textarea>';
           return '<div class="quiz-item">' +
             '<div class="quiz-item-top">' +
               '<div class="quiz-photo-num">' + (i + 1) + '</div>' +
