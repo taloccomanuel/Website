@@ -1,4 +1,4 @@
-var VERSION       = "01.26g";
+var VERSION       = "01.27g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -370,30 +370,7 @@ function getHtml() {
     </div>
   </div>
 
-  <!-- Hazard Identification Quiz (shown when photos are loaded) -->
-  <div class="quiz-card" id="quiz-card" style="display:none">
-    <div class="quiz-card-header">
-      <svg class="quiz-card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span class="quiz-card-title">Hazard Identification</span>
-      <span class="quiz-card-sub" id="quiz-photo-count"></span>
-    </div>
-    <div class="quiz-loading" id="quiz-loading">Loading photos&hellip;</div>
-    <div class="quiz-items" id="quiz-items" style="display:none"></div>
-  </div>
-
-  <!-- Lightbox -->
-  <div class="lb-overlay" id="lb-overlay" onclick="lbClickOutside(event)">
-    <div class="lb-inner">
-      <span class="lb-counter" id="lb-counter"></span>
-      <button class="lb-close" onclick="lbClose()">&#215;</button>
-      <img class="lb-img" id="lb-img" src="" alt="">
-      <div class="lb-caption" id="lb-caption"></div>
-      <button class="lb-nav lb-prev" id="lb-prev" onclick="lbNav(-1)">&#8249;</button>
-      <button class="lb-nav lb-next" id="lb-next" onclick="lbNav(1)">&#8250;</button>
-    </div>
-  </div>
-
-  <div class="save-wrap">
+    <div class="save-wrap">
     <button class="save-btn" id="save-btn" onclick="sendToSheets()">Save</button>
     <div class="submit-status" id="submit-status"></div>
     <div class="last-saved" id="last-saved"></div>
@@ -414,353 +391,94 @@ function getHtml() {
 
 <div class="toast" id="toast"></div>
 
-<script>document.documentElement.style.outline='6px solid lime';</script>
+<!-- s1: diagnostic + globals -->
 <script>
-  var _b = document.getElementById('js-error-banner');
-  if (_b) _b.textContent = 'JS started';
-
-  window.onerror = function(msg, src, line) {
-    var el = document.getElementById('js-error-banner');
-    if (el) el.textContent = 'JS error: ' + msg + ' (line ' + line + ')';
-  };
-
-  var rows = [], rid = 0;
-
-  document.getElementById('sheet-date').value = new Date().toISOString().split('T')[0];
-
-  function hasBlankRow() {
-    return rows.some(function(id) { return !((document.getElementById('name-' + id) || {}).value || '').trim(); });
-  }
-
-  function addRow(focus) {
-    var id = ++rid;
-    rows.push(id);
-    var el = document.createElement('div');
-    el.className = 'entry-row';
-    el.id = 'row-' + id;
-    el.innerHTML =
-      '<div class="row-num" id="num-' + id + '"></div>' +
-      '<div class="entry-content">' +
-        '<input class="name-input" id="name-' + id + '" type="text" placeholder="Full name" autocomplete="off" oninput="onNameInput(' + id + ')" />' +
-        '<div class="sig-row">' +
-          '<canvas class="sig-canvas" id="canvas-' + id + '" height="52"></canvas>' +
-          '<button class="clear-sig" id="clr-' + id + '" onclick="clearCanvas(' + id + ')" type="button">Clear</button>' +
-        '</div>' +
-      '</div>' +
-      '<button class="remove-btn" id="rm-' + id + '" onclick="removeRow(' + id + ')" title="Remove">&#215;</button>';
-    document.getElementById('entries').appendChild(el);
-    initCanvas(id);
-    reNumber();
-    updateCount();
-    if (focus) setTimeout(function() { var fe = document.getElementById('name-' + id); if (fe) fe.focus(); }, 50);
-  }
-
-  function onNameInput(id) {
-    updateCount();
-    var val = ((document.getElementById('name-' + id) || {}).value || '').trim();
-    if (val && !hasBlankRow()) addRow(false);
-  }
-
-  function removeRow(id) {
-    var _rr = document.getElementById('row-' + id); if (_rr) _rr.remove();
-    rows = rows.filter(function(r) { return r !== id; });
-    reNumber();
-    updateCount();
-    if (!hasBlankRow()) addRow(false);
-  }
-
-  function reNumber() {
-    rows.forEach(function(id, i) {
-      var el = document.getElementById('num-' + id);
-      if (el) el.textContent = i + 1;
-    });
-  }
-
-  function updateCount() {
-    var n = rows.filter(function(id) { return ((document.getElementById('name-' + id) || {}).value || '').trim(); }).length;
-    document.getElementById('count').textContent = n + (n === 1 ? ' attendee' : ' attendees');
-  }
-
-  function getFilledEntries() {
-    return rows
-      .map(function(id) {
-        var name = ((document.getElementById('name-' + id) || {}).value || '').trim();
-        if (!name) return null;
-        var canvas = document.getElementById('canvas-' + id);
-        var sig = (canvas && canvas.classList.contains('signed')) ? canvas.toDataURL('image/png') : '';
-        return { name: name, sig: sig };
-      })
-      .filter(Boolean);
-  }
-
-  function initCanvas(id) {
-    var canvas = document.getElementById('canvas-' + id);
-    var rect = canvas.getBoundingClientRect();
-    canvas.width = Math.round(rect.width) || 280;
-    canvas.height = 52;
-    var ctx = canvas.getContext('2d');
-    var drawing = false;
-    function getPos(e) {
-      var r = canvas.getBoundingClientRect();
-      var src = e.touches ? e.touches[0] : e;
-      return {
-        x: (src.clientX - r.left) * (canvas.width / r.width),
-        y: (src.clientY - r.top) * (canvas.height / r.height)
-      };
-    }
-    function start(e) { e.preventDefault(); drawing = true; var p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
-    function draw(e) {
-      if (!drawing) return;
-      e.preventDefault();
-      var p = getPos(e);
-      ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#1a1a18';
-      ctx.lineTo(p.x, p.y); ctx.stroke();
-      canvas.classList.add('signed');
-    }
-    function stop() { drawing = false; }
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stop);
-    canvas.addEventListener('mouseleave', stop);
-    canvas.addEventListener('touchstart', start, { passive: false });
-    canvas.addEventListener('touchmove', draw, { passive: false });
-    canvas.addEventListener('touchend', stop);
-  }
-
-  function clearCanvas(id) {
-    var canvas = document.getElementById('canvas-' + id);
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    canvas.classList.remove('signed');
-  }
-
-  function setFieldsDisabled(disabled) {
-    document.getElementById('topic').disabled = disabled;
-    document.getElementById('sheet-date').disabled = disabled;
-    document.getElementById('location').disabled = disabled;
-    rows.forEach(function(id) {
-      var inp = document.getElementById('name-' + id);
-      var rbtn = document.getElementById('rm-' + id);
-      var clr = document.getElementById('clr-' + id);
-      var cvs = document.getElementById('canvas-' + id);
-      if (inp) inp.disabled = disabled;
-      if (rbtn) rbtn.disabled = disabled;
-      if (clr) clr.disabled = disabled;
-      if (cvs) cvs.style.pointerEvents = disabled ? 'none' : '';
-    });
-    setQuizDisabled(disabled);
-  }
-
-  /* -- Clear All -- */
-  function openClearConfirm() {
-    document.getElementById('confirm-overlay').classList.add('open');
-  }
-  function closeClearConfirm() {
-    document.getElementById('confirm-overlay').classList.remove('open');
-  }
-  function doClearAll() {
-    closeClearConfirm();
-    document.getElementById('entries').innerHTML = '';
-    rows = []; rid = 0;
-    addRow(false); addRow(false); addRow(false);
-    updateCount();
-    document.getElementById('submit-status').className = 'submit-status';
-    showToast('Sheet cleared');
-  }
-
-  document.getElementById('confirm-overlay').addEventListener('click', function(e) {
-    if (e.target === this) closeClearConfirm();
-  });
-
-  /* -- Save -- */
-  function sendToSheets() {
-    var entries = getFilledEntries();
-    if (!entries.length) {
-      showStatus('err', 'Please add at least one name before saving.');
-      return;
-    }
-    var topic       = document.getElementById('topic').value.trim() || 'Untitled';
-    var date        = document.getElementById('sheet-date').value;
-    var location    = document.getElementById('location').value.trim();
-    var quizAnswers = getQuizAnswers();
-    var btn   = document.getElementById('save-btn');
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Saving&hellip;';
-    setFieldsDisabled(true);
-    document.getElementById('submit-status').className = 'submit-status';
-
-    google.script.run
-      .withSuccessHandler(function(result) {
-        var savedAt = result.savedAt || result;
-        var sigErrors = result.sigErrors || [];
-        btn.innerHTML = '&#10003; Saved!';
-        if (sigErrors.length) {
-          showStatus('warn', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved. Signature upload failed: ' + sigErrors[0]);
-        } else {
-          showStatus('ok', entries.length + ' record' + (entries.length > 1 ? 's' : '') + ' saved successfully.');
-        }
-        setLastSaved(savedAt, topic, entries.length);
-        setTimeout(function() {
-          var hadSigError = sigErrors.length > 0;
-          var warnText = hadSigError ? document.getElementById('submit-status').textContent : '';
-          doClearAll();
-          document.getElementById('topic').value = '';
-          document.getElementById('location').value = '';
-          _hazardPhotos.forEach(function(p, i) { var oel = document.getElementById('obs-' + i); if (oel) oel.value = ''; });
-          btn.disabled = false;
-          btn.textContent = 'Save';
-          setFieldsDisabled(false);
-          if (hadSigError) {
-            showStatus('warn', warnText);
-          }
-        }, 1800);
-      })
-      .withFailureHandler(function(err) {
-        setFieldsDisabled(false);
-        btn.disabled = false;
-        btn.textContent = 'Save';
-        showStatus('err', 'Unable to save. Please check your connection and try again.');
-      })
-      .saveData(topic, date, location, entries, quizAnswers);
-  }
-
-  function showStatus(type, msg) {
-    var el = document.getElementById('submit-status');
-    el.className = 'submit-status ' + type;
-    el.textContent = msg;
-  }
-
-  function setLastSaved(savedAt, topic, count) {
-    var el = document.getElementById('last-saved');
-    if (!el || !savedAt) return;
-    el.innerHTML = 'Last saved: <strong>' + savedAt + '</strong> &nbsp;&middot;&nbsp; ' +
-      count + ' record' + (Number(count) !== 1 ? 's' : '') +
-      ' &nbsp;&middot;&nbsp; Topic: <strong>' + topic + '</strong>';
-  }
-
-  function loadLastSaved() {
-    google.script.run
-      .withSuccessHandler(function(info) {
-        if (info && info.savedAt) setLastSaved(info.savedAt, info.topic, info.count);
-      })
-      .getLastSaved();
-  }
-
-  function showToast(msg) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(function() { t.classList.remove('show'); }, 2400);
-  }
-
-  // -- Hazard quiz --
-  var _hazardPhotos = [];
-  var _lbIdx = 0;
-
-  function driveThumbUrl(url, size) {
-    var m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=' + (size || 'w800') : url;
-  }
-
-  function loadHazardPhotos() {
-    google.script.run
-      .withSuccessHandler(function(photos) {
-        _hazardPhotos = photos || [];
-        var card = document.getElementById('quiz-card');
-        var loading = document.getElementById('quiz-loading');
-        var items = document.getElementById('quiz-items');
-        var countEl = document.getElementById('quiz-photo-count');
-        if (!_hazardPhotos.length) { return; }
-        card.style.display = 'block';
-        countEl.textContent = _hazardPhotos.length + ' photo' + (_hazardPhotos.length !== 1 ? 's' : '');
-        items.innerHTML = _hazardPhotos.map(function(p, i) {
-          var thumb = driveThumbUrl(p.url, 'w800');
-          var cap = p.caption ? '<div class="quiz-caption">' + p.caption + '</div>' : '';
-          var obsLabel = '<div class="quiz-obs-label">What C8 hazards do you see?</div>';
-          var obsField = '<textarea class="quiz-obs" id="obs-' + i + '" placeholder="Describe the hazards you observe in this photo..." rows="3"></textarea>';
-          return '<div class="quiz-item">' +
-            '<div class="quiz-item-top">' +
-              '<div class="quiz-photo-num">' + (i + 1) + '</div>' +
-              '<div class="quiz-photo-wrap" onclick="lbOpen(' + i + ')">' +
-                '<img src="' + thumb + '" alt="" loading="lazy">' +
-                '<div class="quiz-expand-hint">Tap to enlarge</div>' +
-              '</div>' +
-            '</div>' +
-            cap + obsLabel + obsField +
-            '</div>';
-        }).join('');
-        loading.style.display = 'none';
-        items.style.display = 'flex';
-      })
-      .withFailureHandler(function() {
-        document.getElementById('quiz-loading').textContent = 'Could not load photos.';
-      })
-      .getHazardPhotos();
-  }
-
-  function getQuizAnswers() {
-    return _hazardPhotos.map(function(p, i) {
-      var el = document.getElementById('obs-' + i);
-      return { caption: p.caption, observation: el ? el.value.trim() : '' };
-    });
-  }
-
-  function setQuizDisabled(disabled) {
-    _hazardPhotos.forEach(function(p, i) {
-      var el = document.getElementById('obs-' + i);
-      if (el) el.disabled = disabled;
-    });
-  }
-
-  function lbOpen(idx) {
-    _lbIdx = idx;
-    lbRender();
-    document.getElementById('lb-overlay').classList.add('open');
-  }
-
-  function lbClose() {
-    document.getElementById('lb-overlay').classList.remove('open');
-  }
-
-  function lbNav(dir) {
-    _lbIdx = (_lbIdx + dir + _hazardPhotos.length) % _hazardPhotos.length;
-    lbRender();
-  }
-
-  function lbRender() {
-    var p = _hazardPhotos[_lbIdx];
-    document.getElementById('lb-img').src = driveThumbUrl(p.url, 'w1200');
-    document.getElementById('lb-caption').textContent = p.caption || '';
-    document.getElementById('lb-counter').textContent = (_lbIdx + 1) + ' / ' + _hazardPhotos.length;
-    document.getElementById('lb-prev').style.display = _hazardPhotos.length > 1 ? '' : 'none';
-    document.getElementById('lb-next').style.display = _hazardPhotos.length > 1 ? '' : 'none';
-  }
-
-  function lbClickOutside(e) {
-    if (e.target === document.getElementById('lb-overlay')) lbClose();
-  }
-
-  document.addEventListener('keydown', function(e) {
-    if (!document.getElementById('lb-overlay').classList.contains('open')) return;
-    if (e.key === 'ArrowRight') lbNav(1);
-    else if (e.key === 'ArrowLeft') lbNav(-1);
-    else if (e.key === 'Escape') lbClose();
-  });
-
-  try {
-    addRow(false); addRow(false); addRow(false);
-    var entriesEl = document.getElementById('entries');
-    var banner = document.getElementById('js-error-banner');
-    if (banner) banner.textContent = 'rows=' + rows.length + ' children=' + (entriesEl ? entriesEl.children.length : 'no-el') + ' html=' + (entriesEl ? entriesEl.innerHTML.substring(0,60) : 'none');
-  } catch(e) {
-    var banner2 = document.getElementById('js-error-banner');
-    if (banner2) banner2.textContent = 'addRow error: ' + e.message;
-  }
-  loadLastSaved();
-  loadHazardPhotos();
+var _b=document.getElementById('js-error-banner');if(_b)_b.textContent='s1-ok';
+var rows=[],rid=0;
+document.getElementById('sheet-date').value=new Date().toISOString().split('T')[0];
+</script>
+<!-- s2: hasBlankRow onNameInput removeRow -->
+<script>
+function hasBlankRow(){return rows.some(function(id){return!((document.getElementById('name-'+id)||{}).value||'').trim();});}
+function onNameInput(id){updateCount();var v=((document.getElementById('name-'+id)||{}).value||'').trim();if(v&&!hasBlankRow())addRow(false);}
+function removeRow(id){var r=document.getElementById('row-'+id);if(r)r.remove();rows=rows.filter(function(r){return r!==id;});reNumber();updateCount();if(!hasBlankRow())addRow(false);}
+</script>
+<!-- s3: reNumber updateCount getFilledEntries -->
+<script>
+function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;});}
+function updateCount(){var n=rows.filter(function(id){return((document.getElementById('name-'+id)||{}).value||'').trim();}).length;document.getElementById('count').textContent=n+(n===1?' attendee':' attendees');}
+function getFilledEntries(){return rows.map(function(id){var name=((document.getElementById('name-'+id)||{}).value||'').trim();if(!name)return null;var canvas=document.getElementById('canvas-'+id);var sig=(canvas&&canvas.classList.contains('signed'))?canvas.toDataURL('image/png'):'';return{name:name,sig:sig};}).filter(Boolean);}
+</script>
+<!-- s4: addRow -->
+<script>
+function addRow(focus){
+var id=++rid;rows.push(id);
+var el=document.createElement('div');el.className='entry-row';el.id='row-'+id;
+el.innerHTML='<div class="row-num" id="num-'+id+'"></div><div class="entry-content"><input class="name-input" id="name-'+id+'" type="text" placeholder="Full name" autocomplete="off" oninput="onNameInput('+id+')" /><div class="sig-row"><canvas class="sig-canvas" id="canvas-'+id+'" height="52"></canvas><button class="clear-sig" id="clr-'+id+'" onclick="clearCanvas('+id+')" type="button">Clear</button></div></div><button class="remove-btn" id="rm-'+id+'" onclick="removeRow('+id+')" title="Remove">&#215;</button>';
+document.getElementById('entries').appendChild(el);
+initCanvas(id);reNumber();updateCount();
+if(focus)setTimeout(function(){var fe=document.getElementById('name-'+id);if(fe)fe.focus();},50);
+}
+</script>
+<!-- s5: initCanvas -->
+<script>
+function initCanvas(id){
+var canvas=document.getElementById('canvas-'+id);
+var rect=canvas.getBoundingClientRect();
+canvas.width=Math.round(rect.width)||280;canvas.height=52;
+var ctx=canvas.getContext('2d');var drawing=false;
+function getPos(e){var r=canvas.getBoundingClientRect();var s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*(canvas.width/r.width),y:(s.clientY-r.top)*(canvas.height/r.height)};}
+function start(e){e.preventDefault();drawing=true;var p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);}
+function draw(e){if(!drawing)return;e.preventDefault();var p=getPos(e);ctx.lineWidth=1.8;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#1a1a18';ctx.lineTo(p.x,p.y);ctx.stroke();canvas.classList.add('signed');}
+function stop(){drawing=false;}
+canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',stop);canvas.addEventListener('mouseleave',stop);canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',draw,{passive:false});canvas.addEventListener('touchend',stop);
+}
+</script>
+<!-- s6: clearCanvas setFieldsDisabled -->
+<script>
+function clearCanvas(id){var c=document.getElementById('canvas-'+id);if(!c)return;var ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);c.classList.remove('signed');}
+function setFieldsDisabled(disabled){
+document.getElementById('topic').disabled=disabled;
+document.getElementById('sheet-date').disabled=disabled;
+document.getElementById('location').disabled=disabled;
+rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.getElementById('rm-'+id),c=document.getElementById('clr-'+id),d=document.getElementById('canvas-'+id);if(a)a.disabled=disabled;if(b)b.disabled=disabled;if(c)c.disabled=disabled;if(d)d.style.pointerEvents=disabled?'none':'';});
+}
+</script>
+<!-- s7: confirm dialogs -->
+<script>
+function openClearConfirm(){document.getElementById('confirm-overlay').classList.add('open');}
+function closeClearConfirm(){document.getElementById('confirm-overlay').classList.remove('open');}
+function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';showToast('Sheet cleared');}
+document.getElementById('confirm-overlay').addEventListener('click',function(e){if(e.target===this)closeClearConfirm();});
+</script>
+<!-- s8: showStatus setLastSaved loadLastSaved showToast -->
+<script>
+function showStatus(t,m){var el=document.getElementById('submit-status');el.className='submit-status '+t;el.textContent=m;}
+function setLastSaved(at,topic,count){var el=document.getElementById('last-saved');if(!el||!at)return;el.innerHTML='Last saved: <strong>'+at+'</strong> &nbsp;&middot;&nbsp; '+count+' record'+(Number(count)!==1?'s':'')+' &nbsp;&middot;&nbsp; Topic: <strong>'+topic+'</strong>';}
+function loadLastSaved(){google.script.run.withSuccessHandler(function(info){if(info&&info.savedAt)setLastSaved(info.savedAt,info.topic,info.count);}).getLastSaved();}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2400);}
+</script>
+<!-- s9: sendToSheets -->
+<script>
+function sendToSheets(){
+var entries=getFilledEntries();
+if(!entries.length){showStatus('err','Please add at least one name before saving.');return;}
+var topic=document.getElementById('topic').value.trim()||'Untitled';
+var date=document.getElementById('sheet-date').value;
+var location=document.getElementById('location').value.trim();
+var btn=document.getElementById('save-btn');
+btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving&hellip;';
+setFieldsDisabled(true);document.getElementById('submit-status').className='submit-status';
+google.script.run
+.withSuccessHandler(function(r){var at=r.savedAt||r;var sigErr=r.sigErrors||[];btn.innerHTML='&#10003; Saved!';if(sigErr.length){showStatus('warn',entries.length+' record'+(entries.length>1?'s':'')+' saved. Sig error: '+sigErr[0]);}else{showStatus('ok',entries.length+' record'+(entries.length>1?'s':'')+' saved.');}setLastSaved(at,topic,entries.length);setTimeout(function(){doClearAll();document.getElementById('topic').value='';document.getElementById('location').value='';btn.disabled=false;btn.textContent='Save';setFieldsDisabled(false);},1800);})
+.withFailureHandler(function(){setFieldsDisabled(false);btn.disabled=false;btn.textContent='Save';showStatus('err','Unable to save. Try again.');})
+.saveData(topic,date,location,entries,[]);
+}
+</script>
+<!-- s10: init -->
+<script>
+addRow(false);addRow(false);addRow(false);loadLastSaved();
+if(_b)_b.textContent='ready-'+rows.length+'rows';
 </script>
 <div class="gas-version-pill">v${VERSION}</div>
 </body>
