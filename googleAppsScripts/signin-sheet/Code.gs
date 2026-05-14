@@ -1,4 +1,4 @@
-var VERSION       = "01.21g";
+var VERSION       = "01.22g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -414,6 +414,7 @@ function getHtml() {
 
 <div class="toast" id="toast"></div>
 
+<script>document.getElementById('js-error-banner').textContent='tiny-script-ok';</script>
 <script>
   document.getElementById('js-error-banner').textContent = 'JS OK - loading...';
 
