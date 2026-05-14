@@ -1,4 +1,4 @@
-var VERSION       = "01.17g";
+var VERSION       = "01.18g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -231,7 +231,7 @@ function getHtml() {
   .table-head { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; padding: 10px 32px; background: var(--paper-mid); border-bottom: 1px solid var(--line); }
   .col-label { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-muted); }
   .entries { padding: 0 32px; }
-  .entry-row { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; align-items: start; padding: 13px 0; border-bottom: 1px solid var(--line); animation: fadeIn 0.18s ease both; }
+  .entry-row { display: grid; grid-template-columns: 40px 1fr 36px; gap: 12px; align-items: start; padding: 13px 0; border-bottom: 1px solid var(--line); }
   .entry-content { display: flex; flex-direction: column; gap: 8px; }
   .sig-canvas { display: block; width: 100%; height: 52px; border: 1px solid var(--line); border-radius: 4px; background: #fff; cursor: crosshair; touch-action: none; }
   .sig-canvas.signed { border-color: var(--accent); }
@@ -363,6 +363,7 @@ function getHtml() {
       <div class="col-label">Name &amp; Signature</div>
       <div></div>
     </div>
+    <div id="js-error-banner" style="display:block;color:#c0392b;padding:8px 16px;font-size:12px;"></div>
     <div class="entries" id="entries"></div>
     <div class="sheet-footer">
       <span class="count-text" id="count">0 attendees</span>
@@ -414,6 +415,11 @@ function getHtml() {
 <div class="toast" id="toast"></div>
 
 <script>
+  window.onerror = function(msg, src, line) {
+    var el = document.getElementById('js-error-banner');
+    if (el) el.textContent = 'JS error: ' + msg + ' (line ' + line + ')';
+  };
+
   let rows = [], rid = 0;
 
   document.getElementById('sheet-date').value = new Date().toISOString().split('T')[0];
