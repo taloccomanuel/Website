@@ -1,4 +1,4 @@
-var VERSION       = "01.19g";
+var VERSION       = "01.20g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -363,7 +363,7 @@ function getHtml() {
       <div class="col-label">Name &amp; Signature</div>
       <div></div>
     </div>
-    <div id="js-error-banner" style="display:block;color:#c0392b;padding:8px 16px;font-size:12px;"></div>
+    <div id="js-error-banner" style="display:block;color:#c0392b;padding:8px 16px;font-size:12px;">JS NOT LOADED</div>
     <div class="entries" id="entries"></div>
     <div class="sheet-footer">
       <span class="count-text" id="count">0 attendees</span>
@@ -415,6 +415,8 @@ function getHtml() {
 <div class="toast" id="toast"></div>
 
 <script>
+  document.getElementById('js-error-banner').textContent = 'JS OK - loading...';
+
   window.onerror = function(msg, src, line) {
     var el = document.getElementById('js-error-banner');
     if (el) el.textContent = 'JS error: ' + msg + ' (line ' + line + ')';
