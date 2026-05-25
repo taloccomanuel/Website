@@ -1,4 +1,4 @@
-var VERSION       = "01.28g";
+var VERSION       = "01.29g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -12,8 +12,9 @@ var SPREADSHEET_ID = "1o0EHsjkh7NJCpcvTPjVU8zUtKSwwOs2aolfnfOkrbwg";
 var SIGNATURE_FOLDER_ID = "";
 
 // Static hazard-spotting image shown at the bottom of the sign-in sheet.
-// File lives at live-site-pages/images/ in the repo.
-var STATIC_QUIZ_IMAGE_URL = "https://pfcassociates.github.io/images/C8image1.png";
+// File lives at live-site-pages/images/ in the repo. Served via jsDelivr's
+// GitHub CDN so it loads cross-origin from inside the GAS iframe.
+var STATIC_QUIZ_IMAGE_URL = "https://cdn.jsdelivr.net/gh/taloccomanuel/Website@main/live-site-pages/images/C8image1.png";
 
 function doGet(e) {
   return HtmlService.createHtmlOutput(getHtml())
