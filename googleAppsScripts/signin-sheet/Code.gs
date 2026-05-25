@@ -1,4 +1,4 @@
-var VERSION       = "01.30g";
+var VERSION       = "01.31g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -11,9 +11,13 @@ var SPREADSHEET_ID = "1o0EHsjkh7NJCpcvTPjVU8zUtKSwwOs2aolfnfOkrbwg";
 // Leave empty ("") to save to the root of My Drive.
 var SIGNATURE_FOLDER_ID = "";
 
-// Static hazard-spotting image shown at the bottom of the sign-in sheet.
-// File lives at live-site-pages/images/ in the repo.
-var STATIC_QUIZ_IMAGE_URL = "https://taloccomanuel.github.io/Website/images/C8image1.png";
+// Static hazard-spotting images shown at the bottom of the sign-in sheet.
+// Files live at live-site-pages/images/ in the repo. Each image gets its
+// own pair of Critical-8 / hazard questions.
+var STATIC_QUIZ_IMAGE_URLS = [
+  "https://taloccomanuel.github.io/Website/images/C8image1.png",
+  "https://taloccomanuel.github.io/Website/images/C8image2.png"
+];
 
 function doGet(e) {
   return HtmlService.createHtmlOutput(getHtml())
@@ -304,7 +308,10 @@ function getHtml() {
   .static-quiz-card { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; margin-top: 16px; animation: rise 0.4s ease both; }
   .static-quiz-header { padding: 16px 32px; border-bottom: 1px solid var(--line); background: #fff3f2; display: flex; align-items: center; gap: 10px; }
   .static-quiz-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #1a1a18; }
-  .static-quiz-body { padding: 20px 32px 28px; display: flex; flex-direction: column; gap: 20px; }
+  .static-quiz-body { padding: 20px 32px 28px; display: flex; flex-direction: column; gap: 32px; }
+  .static-quiz-block { display: flex; flex-direction: column; gap: 14px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .static-quiz-block:last-child { border-bottom: none; padding-bottom: 0; }
+  .static-quiz-image-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); }
   .static-quiz-image-wrap { border-radius: var(--radius); overflow: hidden; background: var(--paper-mid); cursor: pointer; position: relative; }
   .static-quiz-image-wrap img { width: 100%; max-height: 360px; object-fit: contain; display: block; background: var(--paper-mid); }
   .static-quiz-image-missing { padding: 60px 20px; text-align: center; font-size: 13px; color: var(--ink-faint); }
@@ -390,18 +397,22 @@ function getHtml() {
       <span class="static-quiz-title">Hazard Spotting</span>
     </div>
     <div class="static-quiz-body">
-      <div class="static-quiz-image-wrap" id="static-quiz-image-wrap">
-        <img id="static-quiz-image" src="${STATIC_QUIZ_IMAGE_URL}" alt="Hazard spotting image" onerror="this.style.display='none';document.getElementById('static-quiz-missing').style.display='block';" />
-        <div class="static-quiz-image-missing" id="static-quiz-missing" style="display:none;">Image unavailable</div>
-      </div>
-      <div class="static-quiz-q">
-        <label class="static-quiz-q-label" for="static-quiz-q1"><span class="static-quiz-q-num">1</span>What Critical 8 do you see in the image?</label>
-        <textarea class="quiz-obs" id="static-quiz-q1" placeholder="Your answer&hellip;"></textarea>
-      </div>
-      <div class="static-quiz-q">
-        <label class="static-quiz-q-label" for="static-quiz-q2"><span class="static-quiz-q-num">2</span>What hazards do you see in those images?</label>
-        <textarea class="quiz-obs" id="static-quiz-q2" placeholder="Your answer&hellip;"></textarea>
-      </div>
+      ${STATIC_QUIZ_IMAGE_URLS.map(function(url, i){ return `
+      <div class="static-quiz-block">
+        <div class="static-quiz-image-label">Image ${i+1}</div>
+        <div class="static-quiz-image-wrap">
+          <img src="${url}" alt="Hazard spotting image ${i+1}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+          <div class="static-quiz-image-missing" style="display:none;">Image unavailable</div>
+        </div>
+        <div class="static-quiz-q">
+          <label class="static-quiz-q-label" for="static-quiz-q1-${i}"><span class="static-quiz-q-num">1</span>What Critical 8 do you see in the image?</label>
+          <textarea class="quiz-obs static-quiz-textarea" id="static-quiz-q1-${i}" data-img="${i+1}" data-q="1" placeholder="Your answer&hellip;"></textarea>
+        </div>
+        <div class="static-quiz-q">
+          <label class="static-quiz-q-label" for="static-quiz-q2-${i}"><span class="static-quiz-q-num">2</span>What hazards do you see in those images?</label>
+          <textarea class="quiz-obs static-quiz-textarea" id="static-quiz-q2-${i}" data-img="${i+1}" data-q="2" placeholder="Your answer&hellip;"></textarea>
+        </div>
+      </div>`; }).join('')}
     </div>
   </div>
 
@@ -443,7 +454,7 @@ function removeRow(id){var r=document.getElementById('row-'+id);if(r)r.remove();
 function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;});}
 function updateCount(){var n=rows.filter(function(id){return((document.getElementById('name-'+id)||{}).value||'').trim();}).length;document.getElementById('count').textContent=n+(n===1?' attendee':' attendees');}
 function getFilledEntries(){return rows.map(function(id){var name=((document.getElementById('name-'+id)||{}).value||'').trim();if(!name)return null;var canvas=document.getElementById('canvas-'+id);var sig=(canvas&&canvas.classList.contains('signed'))?canvas.toDataURL('image/png'):'';return{name:name,sig:sig};}).filter(Boolean);}
-function getStaticQuizAnswers(){var q1=(document.getElementById('static-quiz-q1')||{}).value||'';var q2=(document.getElementById('static-quiz-q2')||{}).value||'';var out=[];if(q1.trim())out.push({caption:'What Critical 8 do you see in the image?',observation:q1.trim()});if(q2.trim())out.push({caption:'What hazards do you see in those images?',observation:q2.trim()});return out;}
+function getStaticQuizAnswers(){var out=[];var tas=document.querySelectorAll('.static-quiz-textarea');for(var i=0;i<tas.length;i++){var ta=tas[i];var v=(ta.value||'').trim();if(!v)continue;var img=ta.getAttribute('data-img');var q=ta.getAttribute('data-q');var caption=(q==='1')?('Image '+img+': What Critical 8 do you see in the image?'):('Image '+img+': What hazards do you see in those images?');out.push({caption:caption,observation:v});}return out;}
 </script>
 <!-- s4: addRow -->
 <script>
@@ -477,8 +488,7 @@ function setFieldsDisabled(disabled){
 document.getElementById('topic').disabled=disabled;
 document.getElementById('sheet-date').disabled=disabled;
 document.getElementById('location').disabled=disabled;
-var q1=document.getElementById('static-quiz-q1');if(q1)q1.disabled=disabled;
-var q2=document.getElementById('static-quiz-q2');if(q2)q2.disabled=disabled;
+var sqts=document.querySelectorAll('.static-quiz-textarea');for(var qi=0;qi<sqts.length;qi++)sqts[qi].disabled=disabled;
 rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.getElementById('rm-'+id),c=document.getElementById('clr-'+id),d=document.getElementById('canvas-'+id);if(a)a.disabled=disabled;if(b)b.disabled=disabled;if(c)c.disabled=disabled;if(d)d.style.pointerEvents=disabled?'none':'';});
 }
 </script>
@@ -486,7 +496,7 @@ rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.g
 <script>
 function openClearConfirm(){document.getElementById('confirm-overlay').classList.add('open');}
 function closeClearConfirm(){document.getElementById('confirm-overlay').classList.remove('open');}
-function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';var q1=document.getElementById('static-quiz-q1');if(q1)q1.value='';var q2=document.getElementById('static-quiz-q2');if(q2)q2.value='';showToast('Sheet cleared');}
+function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';var sqts=document.querySelectorAll('.static-quiz-textarea');for(var qi=0;qi<sqts.length;qi++)sqts[qi].value='';showToast('Sheet cleared');}
 document.getElementById('confirm-overlay').addEventListener('click',function(e){if(e.target===this)closeClearConfirm();});
 </script>
 <!-- s8: showStatus setLastSaved loadLastSaved showToast -->
