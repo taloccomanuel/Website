@@ -1,4 +1,4 @@
-var VERSION       = "01.31g";
+var VERSION       = "01.32g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -144,15 +144,33 @@ function saveData(topic, date, location, entries, quizAnswers) {
   });
 
   if (quizAnswers && quizAnswers.length) {
-    var quizSheet = ss.getSheetByName("Hazard Quiz");
-    if (!quizSheet) {
-      quizSheet = ss.insertSheet("Hazard Quiz");
-      quizSheet.appendRow(["Date", "Topic", "Location", "Photo #", "Caption", "Observation", "Submitted At"]);
-    }
+    var quizSheet = ss.getSheetByName("Critical 8 Spotting") || ss.insertSheet("Critical 8 Spotting");
     var submittedAt = new Date().toLocaleString();
-    quizAnswers.forEach(function(a, i) {
-      quizSheet.appendRow([date, topic, location, i + 1, a.caption || '', a.observation || '', submittedAt]);
+    var baseHeaders = ["Date", "Topic", "Location", "Submitted At"];
+    var answerHeaders = quizAnswers.map(function(a) { return a.caption || ''; });
+    var lastCol = quizSheet.getLastColumn();
+    var headers = lastCol > 0 ? quizSheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    if (!headers.length || !headers[0]) {
+      headers = baseHeaders.concat(answerHeaders);
+      quizSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    } else {
+      var toAdd = answerHeaders.filter(function(h) { return headers.indexOf(h) === -1; });
+      if (toAdd.length) {
+        quizSheet.getRange(1, headers.length + 1, 1, toAdd.length).setValues([toAdd]);
+        headers = headers.concat(toAdd);
+      }
+    }
+    var row = headers.map(function(h) {
+      if (h === 'Date') return date;
+      if (h === 'Topic') return topic;
+      if (h === 'Location') return location;
+      if (h === 'Submitted At') return submittedAt;
+      for (var i = 0; i < quizAnswers.length; i++) {
+        if (quizAnswers[i].caption === h) return quizAnswers[i].observation || '';
+      }
+      return '';
     });
+    quizSheet.appendRow(row);
   }
 
   var savedAt = new Date().toLocaleString();
@@ -394,7 +412,7 @@ function getHtml() {
 
   <div class="static-quiz-card">
     <div class="static-quiz-header">
-      <span class="static-quiz-title">Hazard Spotting</span>
+      <span class="static-quiz-title">Critical 8 Spotting</span>
     </div>
     <div class="static-quiz-body">
       ${STATIC_QUIZ_IMAGE_URLS.map(function(url, i){ return `
@@ -454,7 +472,7 @@ function removeRow(id){var r=document.getElementById('row-'+id);if(r)r.remove();
 function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;});}
 function updateCount(){var n=rows.filter(function(id){return((document.getElementById('name-'+id)||{}).value||'').trim();}).length;document.getElementById('count').textContent=n+(n===1?' attendee':' attendees');}
 function getFilledEntries(){return rows.map(function(id){var name=((document.getElementById('name-'+id)||{}).value||'').trim();if(!name)return null;var canvas=document.getElementById('canvas-'+id);var sig=(canvas&&canvas.classList.contains('signed'))?canvas.toDataURL('image/png'):'';return{name:name,sig:sig};}).filter(Boolean);}
-function getStaticQuizAnswers(){var out=[];var tas=document.querySelectorAll('.static-quiz-textarea');for(var i=0;i<tas.length;i++){var ta=tas[i];var v=(ta.value||'').trim();if(!v)continue;var img=ta.getAttribute('data-img');var q=ta.getAttribute('data-q');var caption=(q==='1')?('Image '+img+': What Critical 8 do you see in the image?'):('Image '+img+': What hazards do you see in those images?');out.push({caption:caption,observation:v});}return out;}
+function getStaticQuizAnswers(){var out=[];var tas=document.querySelectorAll('.static-quiz-textarea');for(var i=0;i<tas.length;i++){var ta=tas[i];var v=(ta.value||'').trim();if(!v)continue;var img=ta.getAttribute('data-img');var q=ta.getAttribute('data-q');var caption='Image '+img+' - '+(q==='1'?'Critical 8':'Hazards');out.push({caption:caption,observation:v});}return out;}
 </script>
 <!-- s4: addRow -->
 <script>
