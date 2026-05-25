@@ -1,4 +1,4 @@
-var VERSION       = "01.27g";
+var VERSION       = "01.28g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -10,6 +10,10 @@ var SPREADSHEET_ID = "1o0EHsjkh7NJCpcvTPjVU8zUtKSwwOs2aolfnfOkrbwg";
 // Google Drive folder ID where signature images are saved.
 // Leave empty ("") to save to the root of My Drive.
 var SIGNATURE_FOLDER_ID = "";
+
+// Static hazard-spotting image shown at the bottom of the sign-in sheet.
+// File lives at live-site-pages/images/ in the repo.
+var STATIC_QUIZ_IMAGE_URL = "https://pfcassociates.github.io/images/C8image1.png";
 
 function doGet(e) {
   return HtmlService.createHtmlOutput(getHtml())
@@ -296,6 +300,17 @@ function getHtml() {
   .quiz-obs:focus { border-color: var(--accent); background: #fff; }
   .quiz-obs:disabled { opacity: 0.5; cursor: not-allowed; }
   .quiz-obs::placeholder { color: var(--ink-faint); }
+  /* Static hazard image + questions */
+  .static-quiz-card { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; margin-top: 16px; animation: rise 0.4s ease both; }
+  .static-quiz-header { padding: 16px 32px; border-bottom: 1px solid var(--line); background: #fff3f2; display: flex; align-items: center; gap: 10px; }
+  .static-quiz-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: #1a1a18; }
+  .static-quiz-body { padding: 20px 32px 28px; display: flex; flex-direction: column; gap: 20px; }
+  .static-quiz-image-wrap { border-radius: var(--radius); overflow: hidden; background: var(--paper-mid); cursor: pointer; position: relative; }
+  .static-quiz-image-wrap img { width: 100%; max-height: 360px; object-fit: contain; display: block; background: var(--paper-mid); }
+  .static-quiz-image-missing { padding: 60px 20px; text-align: center; font-size: 13px; color: var(--ink-faint); }
+  .static-quiz-q { display: flex; flex-direction: column; gap: 6px; }
+  .static-quiz-q-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .static-quiz-q-num { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: #c0392b; color: #fff; font-size: 12px; font-weight: 500; text-align: center; line-height: 22px; margin-right: 8px; }
   /* Lightbox */
   .lb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
   .lb-overlay.open { display: flex; }
@@ -370,6 +385,26 @@ function getHtml() {
     </div>
   </div>
 
+  <div class="static-quiz-card">
+    <div class="static-quiz-header">
+      <span class="static-quiz-title">Hazard Spotting</span>
+    </div>
+    <div class="static-quiz-body">
+      <div class="static-quiz-image-wrap" id="static-quiz-image-wrap">
+        <img id="static-quiz-image" src="${STATIC_QUIZ_IMAGE_URL}" alt="Hazard spotting image" onerror="this.style.display='none';document.getElementById('static-quiz-missing').style.display='block';" />
+        <div class="static-quiz-image-missing" id="static-quiz-missing" style="display:none;">Image unavailable</div>
+      </div>
+      <div class="static-quiz-q">
+        <label class="static-quiz-q-label" for="static-quiz-q1"><span class="static-quiz-q-num">1</span>What Critical 8 do you see in the image?</label>
+        <textarea class="quiz-obs" id="static-quiz-q1" placeholder="Your answer&hellip;"></textarea>
+      </div>
+      <div class="static-quiz-q">
+        <label class="static-quiz-q-label" for="static-quiz-q2"><span class="static-quiz-q-num">2</span>What hazards do you see in those images?</label>
+        <textarea class="quiz-obs" id="static-quiz-q2" placeholder="Your answer&hellip;"></textarea>
+      </div>
+    </div>
+  </div>
+
     <div class="save-wrap">
     <button class="save-btn" id="save-btn" onclick="sendToSheets()">Save</button>
     <div class="submit-status" id="submit-status"></div>
@@ -408,6 +443,7 @@ function removeRow(id){var r=document.getElementById('row-'+id);if(r)r.remove();
 function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;});}
 function updateCount(){var n=rows.filter(function(id){return((document.getElementById('name-'+id)||{}).value||'').trim();}).length;document.getElementById('count').textContent=n+(n===1?' attendee':' attendees');}
 function getFilledEntries(){return rows.map(function(id){var name=((document.getElementById('name-'+id)||{}).value||'').trim();if(!name)return null;var canvas=document.getElementById('canvas-'+id);var sig=(canvas&&canvas.classList.contains('signed'))?canvas.toDataURL('image/png'):'';return{name:name,sig:sig};}).filter(Boolean);}
+function getStaticQuizAnswers(){var q1=(document.getElementById('static-quiz-q1')||{}).value||'';var q2=(document.getElementById('static-quiz-q2')||{}).value||'';var out=[];if(q1.trim())out.push({caption:'What Critical 8 do you see in the image?',observation:q1.trim()});if(q2.trim())out.push({caption:'What hazards do you see in those images?',observation:q2.trim()});return out;}
 </script>
 <!-- s4: addRow -->
 <script>
@@ -441,6 +477,8 @@ function setFieldsDisabled(disabled){
 document.getElementById('topic').disabled=disabled;
 document.getElementById('sheet-date').disabled=disabled;
 document.getElementById('location').disabled=disabled;
+var q1=document.getElementById('static-quiz-q1');if(q1)q1.disabled=disabled;
+var q2=document.getElementById('static-quiz-q2');if(q2)q2.disabled=disabled;
 rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.getElementById('rm-'+id),c=document.getElementById('clr-'+id),d=document.getElementById('canvas-'+id);if(a)a.disabled=disabled;if(b)b.disabled=disabled;if(c)c.disabled=disabled;if(d)d.style.pointerEvents=disabled?'none':'';});
 }
 </script>
@@ -448,7 +486,7 @@ rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.g
 <script>
 function openClearConfirm(){document.getElementById('confirm-overlay').classList.add('open');}
 function closeClearConfirm(){document.getElementById('confirm-overlay').classList.remove('open');}
-function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';showToast('Sheet cleared');}
+function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';var q1=document.getElementById('static-quiz-q1');if(q1)q1.value='';var q2=document.getElementById('static-quiz-q2');if(q2)q2.value='';showToast('Sheet cleared');}
 document.getElementById('confirm-overlay').addEventListener('click',function(e){if(e.target===this)closeClearConfirm();});
 </script>
 <!-- s8: showStatus setLastSaved loadLastSaved showToast -->
@@ -472,7 +510,7 @@ setFieldsDisabled(true);document.getElementById('submit-status').className='subm
 google.script.run
 .withSuccessHandler(function(r){var at=r.savedAt||r;var sigErr=r.sigErrors||[];btn.innerHTML='&#10003; Saved!';if(sigErr.length){showStatus('warn',entries.length+' record'+(entries.length>1?'s':'')+' saved. Sig error: '+sigErr[0]);}else{showStatus('ok',entries.length+' record'+(entries.length>1?'s':'')+' saved.');}setLastSaved(at,topic,entries.length);setTimeout(function(){doClearAll();document.getElementById('topic').value='';document.getElementById('location').value='';btn.disabled=false;btn.textContent='Save';setFieldsDisabled(false);},1800);})
 .withFailureHandler(function(){setFieldsDisabled(false);btn.disabled=false;btn.textContent='Save';showStatus('err','Unable to save. Try again.');})
-.saveData(topic,date,location,entries,[]);
+.saveData(topic,date,location,entries,getStaticQuizAnswers());
 }
 </script>
 <!-- s10: init -->
