@@ -1,4 +1,4 @@
-var VERSION       = "01.35g";
+var VERSION       = "01.36g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -10,6 +10,10 @@ var SPREADSHEET_ID = "1o0EHsjkh7NJCpcvTPjVU8zUtKSwwOs2aolfnfOkrbwg";
 // Google Drive folder ID where signature images are saved.
 // Leave empty ("") to save to the root of My Drive.
 var SIGNATURE_FOLDER_ID = "";
+
+// Comma-separated list of addresses to email after every successful save.
+// Leave empty ("") to disable the notification.
+var NOTIFY_EMAIL_TO = "taloccomanuel@gmail.com";
 
 // Static hazard-spotting images shown at the bottom of the sign-in sheet.
 // Files live at live-site-pages/images/ in the repo. Each image gets its
@@ -181,7 +185,64 @@ function saveData(topic, date, location, entries, quizAnswers) {
     lastDate: date,
     lastCount: entries.length.toString()
   });
+
+  try {
+    sendSaveNotification(topic, date, location, entries, quizAnswers, savedAt);
+  } catch (mailErr) {
+    Logger.log('Email notification failed: ' + mailErr.message);
+  }
+
   return { savedAt: savedAt, sigErrors: sigErrors };
+}
+
+function sendSaveNotification(topic, date, location, entries, quizAnswers, savedAt) {
+  if (!NOTIFY_EMAIL_TO) return;
+
+  var esc = function(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+  };
+
+  var attendeeRows = entries.map(function(e, i) {
+    var name = (typeof e === 'string') ? e : (e.name || '');
+    var role = (i === 0) ? 'Foreman' : 'Attendee';
+    return '<tr><td style="padding:6px 10px;border-bottom:1px solid #eee;color:#888;">' + (i + 1) +
+           '</td><td style="padding:6px 10px;border-bottom:1px solid #eee;">' + esc(name) +
+           '</td><td style="padding:6px 10px;border-bottom:1px solid #eee;color:#666;font-size:12px;">' + role +
+           '</td></tr>';
+  }).join('');
+
+  var quizBlock = '';
+  if (quizAnswers && quizAnswers.length) {
+    var qRows = quizAnswers.map(function(a) {
+      return '<tr><td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;width:38%;">' +
+             esc(a.caption) + '</td><td style="padding:6px 10px;border-bottom:1px solid #eee;">' +
+             esc(a.observation) + '</td></tr>';
+    }).join('');
+    quizBlock =
+      '<h3 style="font-family:Arial,sans-serif;color:#1a1a18;margin:24px 0 8px;">Critical 8 / Hazard Recognition</h3>' +
+      '<table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">' +
+      qRows + '</table>';
+  }
+
+  var html =
+    '<div style="font-family:Arial,sans-serif;color:#1a1a18;max-width:640px;">' +
+      '<h2 style="margin:0 0 4px;">Toolbox Talk Sign-In</h2>' +
+      '<div style="color:#666;font-size:13px;margin-bottom:16px;">Submitted ' + esc(savedAt) + '</div>' +
+      '<table style="border-collapse:collapse;font-size:13px;margin-bottom:18px;">' +
+        '<tr><td style="padding:3px 12px 3px 0;color:#888;">Topic</td><td style="padding:3px 0;font-weight:500;">' + esc(topic) + '</td></tr>' +
+        '<tr><td style="padding:3px 12px 3px 0;color:#888;">Date</td><td style="padding:3px 0;">' + esc(date) + '</td></tr>' +
+        '<tr><td style="padding:3px 12px 3px 0;color:#888;">Location</td><td style="padding:3px 0;">' + esc(location) + '</td></tr>' +
+        '<tr><td style="padding:3px 12px 3px 0;color:#888;">Count</td><td style="padding:3px 0;">' + entries.length + '</td></tr>' +
+      '</table>' +
+      '<h3 style="margin:18px 0 6px;">Attendees</h3>' +
+      '<table style="border-collapse:collapse;width:100%;font-size:13px;">' + attendeeRows + '</table>' +
+      quizBlock +
+    '</div>';
+
+  var subject = 'Toolbox Talk: ' + (topic || 'Untitled') + ' — ' + date + ' (' + entries.length + ')';
+  MailApp.sendEmail({ to: NOTIFY_EMAIL_TO, subject: subject, htmlBody: html });
 }
 
 function getHazardPhotos() {
