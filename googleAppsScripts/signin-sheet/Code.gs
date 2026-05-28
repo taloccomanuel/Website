@@ -1,4 +1,4 @@
-var VERSION       = "01.33g";
+var VERSION       = "01.34g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -469,7 +469,7 @@ function removeRow(id){var r=document.getElementById('row-'+id);if(r)r.remove();
 </script>
 <!-- s3: reNumber updateCount getFilledEntries -->
 <script>
-function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;});}
+function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;var n=document.getElementById('name-'+id);if(n)n.placeholder=(i===0?'Foreman name':'Full name');});}
 function updateCount(){var n=rows.filter(function(id){return((document.getElementById('name-'+id)||{}).value||'').trim();}).length;document.getElementById('count').textContent=n+(n===1?' attendee':' attendees');}
 function getFilledEntries(){return rows.map(function(id){var name=((document.getElementById('name-'+id)||{}).value||'').trim();if(!name)return null;var canvas=document.getElementById('canvas-'+id);var sig=(canvas&&canvas.classList.contains('signed'))?canvas.toDataURL('image/png'):'';return{name:name,sig:sig};}).filter(Boolean);}
 function getStaticQuizAnswers(){var out=[];var tas=document.querySelectorAll('.static-quiz-textarea');for(var i=0;i<tas.length;i++){var ta=tas[i];var v=(ta.value||'').trim();if(!v)continue;var img=ta.getAttribute('data-img');var q=ta.getAttribute('data-q');var caption='Image '+img+' - '+(q==='1'?'Critical 8':'Hazards');out.push({caption:caption,observation:v});}return out;}
