@@ -1,4 +1,4 @@
-var VERSION       = "01.32g";
+var VERSION       = "01.33g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -412,7 +412,7 @@ function getHtml() {
 
   <div class="static-quiz-card">
     <div class="static-quiz-header">
-      <span class="static-quiz-title">Critical 8 Spotting</span>
+      <span class="static-quiz-title">Critical 8 / Hazard Recognition</span>
     </div>
     <div class="static-quiz-body">
       ${STATIC_QUIZ_IMAGE_URLS.map(function(url, i){ return `
