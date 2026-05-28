@@ -1,4 +1,4 @@
-var VERSION       = "01.36g";
+var VERSION       = "01.37g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -13,7 +13,7 @@ var SIGNATURE_FOLDER_ID = "";
 
 // Comma-separated list of addresses to email after every successful save.
 // Leave empty ("") to disable the notification.
-var NOTIFY_EMAIL_TO = "taloccomanuel@gmail.com";
+var NOTIFY_EMAIL_TO = "taloccomanuel@gmail.com,tony.kugler@clarkconstruction.com,manuel.talocco@clarkconstruction.com";
 
 // Static hazard-spotting images shown at the bottom of the sign-in sheet.
 // Files live at live-site-pages/images/ in the repo. Each image gets its
