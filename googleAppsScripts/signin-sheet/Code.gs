@@ -1,4 +1,4 @@
-var VERSION       = "01.37g";
+var VERSION       = "01.38g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -21,6 +21,18 @@ var NOTIFY_EMAIL_TO = "taloccomanuel@gmail.com,tony.kugler@clarkconstruction.com
 var STATIC_QUIZ_IMAGE_URLS = [
   "https://taloccomanuel.github.io/Website/images/C8image1.png",
   "https://taloccomanuel.github.io/Website/images/C8image2.png"
+];
+
+// Options offered for the Critical-8 multi-select question (Q1) under each image.
+var CRITICAL_8_CHOICES = [
+  "Confined Space",
+  "Working at Heights",
+  "Trenching and Excavation",
+  "Human-Equipment Interface",
+  "Energy Isolation",
+  "Temporary Structures",
+  "Traffic Control",
+  "Cranes and Hoisting"
 ];
 
 function doGet(e) {
@@ -397,6 +409,13 @@ function getHtml() {
   .static-quiz-q { display: flex; flex-direction: column; gap: 6px; }
   .static-quiz-q-label { font-size: 13px; font-weight: 500; color: var(--ink); }
   .static-quiz-q-num { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: #c0392b; color: #fff; font-size: 12px; font-weight: 500; text-align: center; line-height: 22px; margin-right: 8px; }
+  .static-quiz-c8-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 4px; }
+  .static-quiz-c8-choice { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--paper-dark); border-radius: var(--radius); background: var(--paper); cursor: pointer; font-size: 13px; color: var(--ink); transition: background 0.15s, border-color 0.15s; user-select: none; }
+  .static-quiz-c8-choice:hover { background: #fff; border-color: var(--accent); }
+  .static-quiz-c8-choice input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; cursor: pointer; flex-shrink: 0; }
+  .static-quiz-c8-choice input:disabled { cursor: not-allowed; }
+  .static-quiz-c8-choice.checked { background: #e8eef7; border-color: var(--accent); }
+  @media (max-width: 560px) { .static-quiz-c8-choices { grid-template-columns: 1fr; } }
   /* Lightbox */
   .lb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
   .lb-overlay.open { display: flex; }
@@ -477,15 +496,17 @@ function getHtml() {
     </div>
     <div class="static-quiz-body">
       ${STATIC_QUIZ_IMAGE_URLS.map(function(url, i){ return `
-      <div class="static-quiz-block">
+      <div class="static-quiz-block" data-img="${i+1}">
         <div class="static-quiz-image-label">Image ${i+1}</div>
         <div class="static-quiz-image-wrap">
           <img src="${url}" alt="Hazard spotting image ${i+1}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
           <div class="static-quiz-image-missing" style="display:none;">Image unavailable</div>
         </div>
         <div class="static-quiz-q">
-          <label class="static-quiz-q-label" for="static-quiz-q1-${i}"><span class="static-quiz-q-num">1</span>What Critical 8 do you see in the image?</label>
-          <textarea class="quiz-obs static-quiz-textarea" id="static-quiz-q1-${i}" data-img="${i+1}" data-q="1" placeholder="Your answer&hellip;"></textarea>
+          <span class="static-quiz-q-label"><span class="static-quiz-q-num">1</span>What Critical 8 do you see in the image? <span style="color:var(--ink-faint);font-weight:300;">(select all that apply)</span></span>
+          <div class="static-quiz-c8-choices">
+            ${CRITICAL_8_CHOICES.map(function(c, ci){ return `<label class="static-quiz-c8-choice"><input type="checkbox" class="static-quiz-c8-cb" data-img="${i+1}" value="${c}" onchange="this.parentNode.classList.toggle('checked', this.checked)" /><span>${c}</span></label>`; }).join('')}
+          </div>
         </div>
         <div class="static-quiz-q">
           <label class="static-quiz-q-label" for="static-quiz-q2-${i}"><span class="static-quiz-q-num">2</span>What hazards do you see in the image?</label>
@@ -533,7 +554,7 @@ function removeRow(id){var r=document.getElementById('row-'+id);if(r)r.remove();
 function reNumber(){rows.forEach(function(id,i){var e=document.getElementById('num-'+id);if(e)e.textContent=i+1;var n=document.getElementById('name-'+id);if(n)n.placeholder=(i===0?'Foreman name':'Full name');});}
 function updateCount(){var n=rows.filter(function(id){return((document.getElementById('name-'+id)||{}).value||'').trim();}).length;document.getElementById('count').textContent=n+(n===1?' attendee':' attendees');}
 function getFilledEntries(){return rows.map(function(id){var name=((document.getElementById('name-'+id)||{}).value||'').trim();if(!name)return null;var canvas=document.getElementById('canvas-'+id);var sig=(canvas&&canvas.classList.contains('signed'))?canvas.toDataURL('image/png'):'';return{name:name,sig:sig};}).filter(Boolean);}
-function getStaticQuizAnswers(){var out=[];var tas=document.querySelectorAll('.static-quiz-textarea');for(var i=0;i<tas.length;i++){var ta=tas[i];var v=(ta.value||'').trim();if(!v)continue;var img=ta.getAttribute('data-img');var q=ta.getAttribute('data-q');var caption='Image '+img+' - '+(q==='1'?'Critical 8':'Hazards');out.push({caption:caption,observation:v});}return out;}
+function getStaticQuizAnswers(){var out=[];var blocks=document.querySelectorAll('.static-quiz-block');for(var i=0;i<blocks.length;i++){var img=blocks[i].getAttribute('data-img');var cbs=blocks[i].querySelectorAll('.static-quiz-c8-cb');var picked=[];for(var j=0;j<cbs.length;j++){if(cbs[j].checked)picked.push(cbs[j].value);}if(picked.length)out.push({caption:'Image '+img+' - Critical 8',observation:picked.join(', ')});var ta=blocks[i].querySelector('.static-quiz-textarea');if(ta&&(ta.value||'').trim())out.push({caption:'Image '+img+' - Hazards',observation:ta.value.trim()});}return out;}
 </script>
 <!-- s4: addRow -->
 <script>
@@ -568,6 +589,7 @@ document.getElementById('topic').disabled=disabled;
 document.getElementById('sheet-date').disabled=disabled;
 document.getElementById('location').disabled=disabled;
 var sqts=document.querySelectorAll('.static-quiz-textarea');for(var qi=0;qi<sqts.length;qi++)sqts[qi].disabled=disabled;
+var sqcbs=document.querySelectorAll('.static-quiz-c8-cb');for(var qj=0;qj<sqcbs.length;qj++)sqcbs[qj].disabled=disabled;
 rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.getElementById('rm-'+id),c=document.getElementById('clr-'+id),d=document.getElementById('canvas-'+id);if(a)a.disabled=disabled;if(b)b.disabled=disabled;if(c)c.disabled=disabled;if(d)d.style.pointerEvents=disabled?'none':'';});
 }
 </script>
@@ -575,7 +597,7 @@ rows.forEach(function(id){var a=document.getElementById('name-'+id),b=document.g
 <script>
 function openClearConfirm(){document.getElementById('confirm-overlay').classList.add('open');}
 function closeClearConfirm(){document.getElementById('confirm-overlay').classList.remove('open');}
-function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';var sqts=document.querySelectorAll('.static-quiz-textarea');for(var qi=0;qi<sqts.length;qi++)sqts[qi].value='';showToast('Sheet cleared');}
+function doClearAll(){closeClearConfirm();document.getElementById('entries').innerHTML='';rows=[];rid=0;addRow(false);addRow(false);addRow(false);updateCount();document.getElementById('submit-status').className='submit-status';var sqts=document.querySelectorAll('.static-quiz-textarea');for(var qi=0;qi<sqts.length;qi++)sqts[qi].value='';var sqcbs=document.querySelectorAll('.static-quiz-c8-cb');for(var qj=0;qj<sqcbs.length;qj++){sqcbs[qj].checked=false;sqcbs[qj].parentNode.classList.remove('checked');}showToast('Sheet cleared');}
 document.getElementById('confirm-overlay').addEventListener('click',function(e){if(e.target===this)closeClearConfirm();});
 </script>
 <!-- s8: showStatus setLastSaved loadLastSaved showToast -->
