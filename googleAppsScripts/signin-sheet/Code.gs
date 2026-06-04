@@ -1,4 +1,4 @@
-var VERSION       = "01.42g";
+var VERSION       = "01.43g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -34,6 +34,20 @@ var CRITICAL_8_CHOICES = [
   "Traffic Control",
   "Cranes and Hoisting"
 ];
+
+// Default answer-key values used to seed (or backfill) blank cells in the
+// "Answer Key" sheet. Anything an admin types into the sheet wins; only
+// empty cells get filled from these defaults.
+var DEFAULT_ANSWER_KEY = {
+  "1": {
+    critical8: "Cranes and Hoisting, Trenching and Excavation, Human-Equipment Interface, Working at Heights, Temporary Structures, Traffic Control",
+    hazards: "Mobile crane operating with a suspended load near workers on foot (struck-by / dropped-load); ground workers in proximity to operating heavy equipment (crane, excavator, flatbed truck); deep foundation excavation with only an orange fence at the edge — fall hazard and soil-stability / cave-in risk; concrete formwork and falsework in the excavation that must be braced against collapse; load swing radius extending over personnel and adjacent equipment; loose rebar, lumber, and debris on grade creating trip and overhead-strike hazards; site vehicle and equipment traffic crossing worker paths without clear separation."
+  },
+  "2": {
+    critical8: "Working at Heights, Temporary Structures, Traffic Control",
+    hazards: "Worker on top of the scaffold with no visible fall arrest or guardrails — fall to the sidewalk; scaffold erected directly over a busy public walkway and subway entrance, exposing pedestrians to dropped tools or material; no overhead protection (sidewalk shed / canopy) for the public below; tools and a bucket on the scaffold platform that could be kicked off the edge; scaffold footing and stability on a public sidewalk with pedestrians passing close to the legs; vehicle traffic on the street directly adjacent to the work zone; worker without visible PPE appropriate for elevated work."
+  }
+};
 
 function doGet(e) {
   return HtmlService.createHtmlOutput(getHtml())
@@ -278,23 +292,53 @@ function getAnswerKey() {
   if (!sheet) {
     sheet = ss.insertSheet("Answer Key");
     sheet.appendRow(["Image #", "Critical 8 (comma-separated)", "Hazards"]);
-    for (var i = 0; i < STATIC_QUIZ_IMAGE_URLS.length; i++) {
-      sheet.appendRow([i + 1, "", ""]);
-    }
     sheet.setFrozenRows(1);
     sheet.getRange(1, 1, 1, 3).setFontWeight("bold");
     sheet.setColumnWidth(2, 320);
     sheet.setColumnWidth(3, 400);
+    for (var i = 0; i < STATIC_QUIZ_IMAGE_URLS.length; i++) {
+      var imgNum = i + 1;
+      var def = DEFAULT_ANSWER_KEY[String(imgNum)] || { critical8: '', hazards: '' };
+      sheet.appendRow([imgNum, def.critical8, def.hazards]);
+    }
+    sheet.getRange(2, 3, STATIC_QUIZ_IMAGE_URLS.length, 1).setWrap(true);
+  } else {
+    var lastRow = sheet.getLastRow();
+    var existingImgs = {};
+    if (lastRow > 1) {
+      var imgs = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+      for (var r0 = 0; r0 < imgs.length; r0++) {
+        var num = imgs[r0][0];
+        if (num === '' || num === null) continue;
+        var rowIdx = r0 + 2;
+        existingImgs[String(num)] = true;
+        var def0 = DEFAULT_ANSWER_KEY[String(num)];
+        if (!def0) continue;
+        if (!(imgs[r0][1] || '').toString().trim() && def0.critical8) {
+          sheet.getRange(rowIdx, 2).setValue(def0.critical8);
+        }
+        if (!(imgs[r0][2] || '').toString().trim() && def0.hazards) {
+          sheet.getRange(rowIdx, 3).setValue(def0.hazards).setWrap(true);
+        }
+      }
+    }
+    for (var i2 = 0; i2 < STATIC_QUIZ_IMAGE_URLS.length; i2++) {
+      var n2 = i2 + 1;
+      if (existingImgs[String(n2)]) continue;
+      var d2 = DEFAULT_ANSWER_KEY[String(n2)] || { critical8: '', hazards: '' };
+      sheet.appendRow([n2, d2.critical8, d2.hazards]);
+      sheet.getRange(sheet.getLastRow(), 3).setWrap(true);
+    }
   }
   var data = sheet.getDataRange().getValues();
   var key = {};
   for (var r = 1; r < data.length; r++) {
-    var imgNum = data[r][0];
-    if (imgNum === '' || imgNum === null) continue;
+    var imgNum2 = data[r][0];
+    if (imgNum2 === '' || imgNum2 === null) continue;
     var c8raw = (data[r][1] || '').toString().trim();
     var hazards = (data[r][2] || '').toString().trim();
     var c8 = c8raw ? c8raw.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return !!s; }) : [];
-    key[String(imgNum)] = { critical8: c8, hazards: hazards };
+    key[String(imgNum2)] = { critical8: c8, hazards: hazards };
   }
   return key;
 }
