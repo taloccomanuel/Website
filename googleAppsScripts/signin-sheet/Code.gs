@@ -1,4 +1,4 @@
-var VERSION       = "01.38g";
+var VERSION       = "01.39g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -19,7 +19,7 @@ var NOTIFY_EMAIL_TO = "taloccomanuel@gmail.com,tony.kugler@clarkconstruction.com
 // Files live at live-site-pages/images/ in the repo. Each image gets its
 // own pair of Critical-8 / hazard questions.
 var STATIC_QUIZ_IMAGE_URLS = [
-  "https://taloccomanuel.github.io/Website/images/C8image1.png",
+  "https://taloccomanuel.github.io/Website/images/C8image1.png?v=2",
   "https://taloccomanuel.github.io/Website/images/C8image2.png"
 ];
 
