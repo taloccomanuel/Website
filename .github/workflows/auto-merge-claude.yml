@@ -153,6 +153,16 @@ jobs:
             -d "action=deploy" \
             --max-time 120 || true
 
+      - name: Deploy World Cup 2026 Pool
+        run: |
+          PRE=${{ steps.merge.outputs.pre_merge_sha }}
+          # Only deploy if Code.gs was modified in this merge
+          git diff --name-only "$PRE" HEAD | grep -q "googleAppsScripts/World Cup 2026 Pool/Code.gs" && \
+          curl -L -X POST \
+            "https://script.google.com/macros/s/AKfycbw3y-qIJwrNNSFmReBQqd5C4ifjMPoY9tMjJkexXwoMNfhQetTprGL5jz_3dqCqSt1v/exec" \
+            -d "action=deploy" \
+            --max-time 120 || true
+
       - name: Delete branch
         run: |
           git push origin --delete ${{ github.ref_name }}

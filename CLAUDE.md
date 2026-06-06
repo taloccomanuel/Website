@@ -22,6 +22,7 @@
 | Gas Self-Update Dashboard | `googleAppsScripts/Gas Self-Update Dashboard/Code.gs` | `httpsdocs/test.html` | — | — |
 | AED Monthly Inspection Log | `googleAppsScripts/AED Monthly Inspection Log/AED_Log_Code.gs` | `httpsdocs/aedlog.html` | — | — |
 | signin-sheet | `googleAppsScripts/signin-sheet/Code.gs` | `live-site-pages/signin-sheet.html` | `live-site-pages/gs-versions/signin-sheetgs.version.txt` | `live-site-pages/html-versions/signin-sheethtml.version.txt` |
+| World Cup 2026 Pool | `googleAppsScripts/World Cup 2026 Pool/Code.gs` | — | `live-site-pages/gs-versions/world-cup-2026-poolgs.version.txt` | — |
 
 > **Reminder to Claude:** every commit that edits **any** `.gs` file above MUST bump that file's `VERSION` variable by `0.01` AND update its matching `gs-versions/*.version.txt` to the same value (e.g. `|v01.07g|`). Every commit that edits an embedding HTML page MUST bump its `<meta name="build-version">` AND its `html-versions/*.version.txt` to the same value. Commit message must start with the bumped version(s) (e.g. `v01.07g`, `w01.03w`, or `v01.07g w01.03w`). Do this proactively — the user should not have to ask.
 
