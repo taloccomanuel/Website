@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.05g";
+var VERSION        = "01.06g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -371,6 +371,33 @@ function doPost(e) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+//  HEADER LABELS  —  human-friendly column titles for the Predictions sheet
+//  Group-match score columns get the country appended (e.g. "P1_H-Mexico").
+//  The raw data-key always stays as the prefix so scoring can recover it.
+// ═════════════════════════════════════════════════════════════════════════════
+// payload-key → country (home/away team of each group fixture)
+var _WC_TEAM_BY_KEY = (function() {
+  var m = {};
+  WC_FIXTURES.forEach(function(f) {
+    m["P" + f[0] + "_H"] = f[4];
+    m["P" + f[0] + "_A"] = f[5];
+  });
+  return m;
+})();
+
+// "P1_H" → "P1_H-Mexico"  (keys with no known country pass through unchanged)
+function _friendlyHeader(key) {
+  return _WC_TEAM_BY_KEY[key] ? (key + "-" + _WC_TEAM_BY_KEY[key]) : key;
+}
+
+// "P1_H-Mexico" → "P1_H"  (raw keys never contain "-", so split on the first one)
+function _keyFromHeader(header) {
+  var h = "" + header;
+  var i = h.indexOf("-");
+  return i === -1 ? h : h.substring(0, i);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 //  PUBLIC FORM SUBMISSIONS  —  each participant's picks land in "Predictions"
 // ═════════════════════════════════════════════════════════════════════════════
 function _saveSubmission(jsonStr) {
@@ -380,28 +407,33 @@ function _saveSubmission(jsonStr) {
     var sheet = ss.getSheetByName("Predictions") || ss.insertSheet("Predictions");
     var keys  = Object.keys(data);
 
-    // First submission: write a header row (Timestamp + every payload key).
+    // First submission: write a header row (Timestamp + every payload key,
+    // shown with the country name where one is known).
     if (sheet.getLastRow() === 0) {
-      var headers = ["Timestamp"].concat(keys);
+      var headers = ["Timestamp"].concat(keys.map(_friendlyHeader));
       sheet.getRange(1, 1, 1, headers.length).setValues([headers])
         .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold");
       sheet.setFrozenRows(1);
       sheet.setFrozenColumns(2);
     }
 
-    // Reconcile against existing headers; append any new keys as new columns.
-    var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    // Reconcile against existing headers (compared by their raw key);
+    // append any new keys as new friendly-labeled columns.
+    var existing     = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var existingKeys = existing.map(_keyFromHeader);
     keys.forEach(function(k) {
-      if (existing.indexOf(k) === -1) {
-        existing.push(k);
-        sheet.getRange(1, existing.length).setValue(k)
+      if (existingKeys.indexOf(k) === -1) {
+        existing.push(_friendlyHeader(k));
+        existingKeys.push(k);
+        sheet.getRange(1, existing.length).setValue(_friendlyHeader(k))
           .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold");
       }
     });
 
     var row = existing.map(function(h) {
-      if (h === "Timestamp") return new Date();
-      return data.hasOwnProperty(h) ? data[h] : "";
+      var k = _keyFromHeader(h);
+      if (k === "Timestamp") return new Date();
+      return data.hasOwnProperty(k) ? data[k] : "";
     });
     sheet.appendRow(row);
 
@@ -908,7 +940,7 @@ function updateLeaderboard() {
   // Predictions
   var data = pred.getDataRange().getValues();
   var head = data[0], idx = {};
-  head.forEach(function(h,i){ idx[h] = i; });
+  head.forEach(function(h,i){ idx[_keyFromHeader(h)] = i; });
   function val(row, key){ return idx[key] == null ? "" : row[idx[key]]; }
 
   var groupLetters = "ABCDEFGHIJKL".split("");
