@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.10g";
+var VERSION        = "01.11g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -218,7 +218,7 @@ function getHtml() {
 + '  @keyframes spin{to{transform:rotate(360deg);}}\n'
 + '  .bkwrap{overflow-x:auto; -webkit-overflow-scrolling:touch; padding:10px 2px 4px;}\n'
 + '  .bk{display:flex; gap:8px; align-items:stretch; min-width:max-content;}\n'
-+ '  .bkcol{display:flex; flex-direction:column; min-width:148px; flex:0 0 auto;}\n'
++ '  .bkcol{display:flex; flex-direction:column; min-width:170px; flex:0 0 auto;}\n'
 + '  .bkcol .rhd{font-size:11px; font-weight:800; color:var(--blue); text-transform:uppercase; letter-spacing:.4px; text-align:center; padding:4px 0 8px;}\n'
 + '  .bkcol .ms{flex:1 1 auto; display:flex; flex-direction:column; justify-content:space-around;}\n'
 + '  .bkm{background:#fff; border:1px solid var(--line); border-radius:9px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.06); margin:4px 0;}\n'
@@ -230,6 +230,8 @@ function getHtml() {
 + '  .bkt input:focus{outline:none; border-bottom-color:var(--blue2);}\n'
 + '  .bkt .lbl{flex:1 1 0; min-width:0; font-size:13px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}\n'
 + '  .bkt .lbl.empty{color:#bcc4cf; font-weight:500;}\n'
++ '  .bkt .koscore{flex:0 0 30px; width:30px; text-align:center; font-size:13px; font-weight:700; background:var(--input); border:1px solid #d8c98a; border-radius:5px; padding:4px 1px; color:var(--ink);}\n'
++ '  .bkt .koscore:focus{outline:none; border-color:var(--blue2); box-shadow:0 0 0 2px rgba(10,82,201,.12);}\n'
 + '  .bkt .chk{flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:2px solid #cfd6df; background:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff; line-height:1; transition:background .12s,border-color .12s;}\n'
 + '  .bkt .chk::after{content:"\\2713"; opacity:0;}\n'
 + '  .bkt.win{background:#eafaf0;}\n'
@@ -241,7 +243,7 @@ function getHtml() {
 + '  .bkm.ready.decided{box-shadow:0 1px 2px rgba(0,0,0,.06);}\n'
 + '  .champcol .bkchamp{padding:14px 8px; text-align:center; font-size:15px; font-weight:800; color:var(--red);}\n'
 + '  .champcol .bkchamp.empty{color:#bcc4cf;}\n'
-+ '  .bkcol.champcol{min-width:172px;}\n'
++ '  .bkcol.champcol{min-width:190px;}\n'
 + '  .champcol .ms{justify-content:center; gap:14px;}\n'
 + '  .champcol .champwrap{border:2px solid var(--gold); background:linear-gradient(135deg,#fff8e1,#fff);}\n'
 + '  .champcol .rhd{color:var(--gold);}\n'
@@ -272,8 +274,8 @@ function getHtml() {
 + '  <div class="card">\n'
 + '    <h2>🏅 How Scoring Works</h2>\n'
 + '    <div class="body legend">\n'
-+ '      <div class="lg"><span class="ic">✅</span><span>Correct winner <em>or</em> correct draw prediction</span><span class="pts">3 pts</span></div>\n'
-+ '      <div class="lg"><span class="ic">🎯</span><span>Correct outcome + exact score</span><span class="pts">5 pts</span></div>\n'
++ '      <div class="lg"><span class="ic">✅</span><span>Correct winner / draw &mdash; <b>every match</b> (group &amp; knockout)</span><span class="pts">3 pts</span></div>\n'
++ '      <div class="lg"><span class="ic">🎯</span><span>Correct outcome + exact score &mdash; <b>every match</b></span><span class="pts">5 pts</span></div>\n'
 + '      <div class="lg"><span class="ic">🟢</span><span>Each team you correctly predict advances from their group</span><span class="pts">+5 pts</span></div>\n'
 + '      <div class="lg"><span class="ic">🔵</span><span>Each team you correctly predict reaches Round of 16</span><span class="pts">+10 pts</span></div>\n'
 + '      <div class="lg"><span class="ic">🟣</span><span>Each team you correctly predict reaches Quarterfinals</span><span class="pts">+15 pts</span></div>\n'
@@ -284,7 +286,7 @@ function getHtml() {
 + '  <div id="groups"></div>\n'
 + '  <div class="card">\n'
 + '    <h2>🏆 Knockout Bracket</h2>\n'
-+ '    <div class="ko-note"><b>How to fill it:</b> <b>1.</b> Type your predicted teams into the Round-of-32 slots on the <b>left</b> and <b>right</b> edges. <b>2.</b> When both teams in a match are filled it lights up blue &mdash; tap the <b>round circle</b> beside the team you think wins to advance it. <b>3.</b> Winners drop into the next round automatically; keep tapping winners round&#8209;by&#8209;round (R16 &rarr; QF &rarr; SF) until both sides meet in the <b>Final</b> and crown your Champion.<br/><span style="display:inline-block; margin-top:5px">🔑 <b>1E</b> = Group E winner &middot; <b>2A</b> = Group A runner-up &middot; <b>3rd</b> = a qualifying third-placed team. Scroll sideways &harr; to reach the Final.</span></div>\n'
++ '    <div class="ko-note"><b>How to fill it:</b> <b>1.</b> Type your predicted teams into the Round-of-32 slots on the <b>left</b> and <b>right</b> edges. <b>2.</b> Enter the predicted <b>score</b> for each match in the gold boxes (✅ right team = 3 pts · 🎯 exact score = 5 pts). <b>3.</b> When both teams are filled the match lights up blue &mdash; tap the <b>round circle</b> beside the team you think advances (a draw is fine &mdash; the circle decides who goes through on penalties). <b>4.</b> Winners drop into the next round automatically; keep going round&#8209;by&#8209;round (R16 &rarr; QF &rarr; SF) until both sides meet in the <b>Final</b> and crown your Champion.<br/><span style="display:inline-block; margin-top:5px">🔑 <b>1E</b> = Group E winner &middot; <b>2A</b> = Group A runner-up &middot; <b>3rd</b> = a qualifying third-placed team. Scroll sideways &harr; to reach the Final.</span></div>\n'
 + '    <div class="bkwrap" id="knockout"></div>\n'
 + '  </div>\n'
 + '  <div class="footnote">FIFA World Cup 2026™ · Jun 11 – Jul 19 · Unofficial pool</div>\n'
@@ -396,6 +398,7 @@ function getHtml() {
 + '    }else{\n'
 + '      h+=\'<span class="lbl empty" id="lbl_\'+id+\'">—</span><input type="hidden" data-key="\'+id+\'" />\';\n'
 + '    }\n'
++ '    h+=\'<input class="koscore" inputmode="numeric" maxlength="2" data-key="\'+id+\'_S" title="Predicted goals" />\';\n'
 + '    h+=\'<span class="chk"></span></div>\';\n'
 + '  });\n'
 + '  h+=\'</div>\'; return h;\n'
@@ -428,7 +431,7 @@ function getHtml() {
 + '  if(t.tagName==="INPUT"&&t.getAttribute("list")==="teamlist"){TEAMS[t.getAttribute("data-key")]=t.value.trim(); settle();}\n'
 + '});\n'
 + 'koc.addEventListener("click",function(e){\n'
-+ '  if(e.target.tagName==="INPUT"&&e.target.getAttribute("list")==="teamlist") return;\n'
++ '  if(e.target.tagName==="INPUT") return;\n'
 + '  var row=e.target.closest?e.target.closest(".bkt"):null; if(!row) return;\n'
 + '  pick(row.getAttribute("data-k"), +row.getAttribute("data-m"), row.getAttribute("data-s"));\n'
 + '});\n'
