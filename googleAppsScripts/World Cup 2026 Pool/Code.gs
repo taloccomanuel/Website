@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.11g";
+var VERSION        = "01.12g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -931,6 +931,28 @@ var WC_FIXTURES = [
 var WC_STAGE_LIST = ["Group","R32","R16","QF","SF","Final","Champion"];
 var WC_STAGE = {"Group":0,"R32":1,"R16":2,"QF":3,"SF":4,"Final":5,"Champion":6};
 
+// Knockout bracket structure (mirrors the web form). Seed labels for R32 slots.
+var WC_R32DEF = [["1E","3rd"],["1I","3rd"],["2A","2B"],["1F","2C"],["2K","2L"],["1H","2J"],["1D","3rd"],["1G","3rd"],["1C","2F"],["2E","2I"],["1A","3rd"],["1L","3rd"],["1J","2H"],["2D","2G"],["1B","3rd"],["1K","3rd"]];
+// [roundKey, numMatches, label]
+var WC_KO_ROUNDS = [["R32",16,"Round of 32"],["R16",8,"Round of 16"],["QF",4,"Quarterfinals"],["SF",2,"Semifinals"],["FIN",1,"Final"]];
+var WC_KO_TOTAL = 31; // 16+8+4+2+1 knockout matches
+
+// Sorted list of all 48 teams (used for dropdown validation on the Results tab)
+var WC_ALL_TEAMS = (function(){
+  var a = [];
+  Object.keys(WC_GROUPS).forEach(function(g){ WC_GROUPS[g].forEach(function(t){ a.push(t); }); });
+  a.sort();
+  return a;
+})();
+
+// The data-key holding a participant's predicted WINNER of a given knockout match:
+// the winner flows into the feeding slot of the next round (R32->R16->QF->SF->FIN->Champion).
+function _koWinnerKey(rk, m) {
+  if (rk === "FIN") return "CHAMPION";
+  var next = {"R32":"R16","R16":"QF","QF":"SF","SF":"FIN"}[rk];
+  return next + "_" + Math.ceil(m/2) + "_" + (m % 2 === 1 ? "A" : "B");
+}
+
 // Normalized-name → canonical-name map (built once, includes common aliases)
 var WC_CANON = (function() {
   var map = {};
@@ -1022,12 +1044,38 @@ function setupResultsTab() {
     .requireValueInList(WC_STAGE_LIST, true).setAllowInvalid(false).build();
   sh.getRange(3,10,teams.length,1).setDataValidation(rule);
 
+  // ── Section 3: knockout match results (L:R) ──
+  // For each knockout slot the organizer enters the actual two teams, the
+  // score, and which team advanced (so penalty shootouts can be scored).
+  sh.getRange(1,12,1,7).merge()
+    .setValue("KNOCKOUT RESULTS — actual teams, score, and who advanced (covers penalties)")
+    .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sh.getRange(2,12,1,7).setValues([["Match","Round","Team A","GA","GB","Team B","Advanced"]])
+    .setBackground(COLOR_SUBHDR).setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center");
+
+  var koRows = [];
+  WC_KO_ROUNDS.forEach(function(rd){
+    for (var m = 1; m <= rd[1]; m++) {
+      var hint = rd[0] === "R32" ? " (" + WC_R32DEF[m-1][0] + " v " + WC_R32DEF[m-1][1] + ")" : "";
+      koRows.push([rd[2] + " #" + m + hint, rd[0], "", "", "", "", ""]);
+    }
+  });
+  sh.getRange(3,12,koRows.length,7).setValues(koRows);
+  sh.getRange(3,14,koRows.length,5).setBackground(COLOR_INPUT);   // Team A, GA, GB, Team B, Advanced
+  var teamRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(WC_ALL_TEAMS, true).setAllowInvalid(true).build();
+  sh.getRange(3,14,koRows.length,1).setDataValidation(teamRule);  // Team A
+  sh.getRange(3,17,koRows.length,1).setDataValidation(teamRule);  // Team B
+  sh.getRange(3,18,koRows.length,1).setDataValidation(teamRule);  // Advanced
+
   [40,60,55,150,90,90,150,20,150,160].forEach(function(w,c){ sh.setColumnWidth(c+1,w); });
+  [180,55,140,45,45,140,140].forEach(function(w,c){ sh.setColumnWidth(c+12,w); });
   sh.setFrozenRows(2);
   ss.setActiveSheet(sh);
 
   var ui = _ui();
-  if (ui) ui.alert("'Results' tab is ready.\n\nFill in the match scores (columns E/F) and set each team's furthest round (column J), then run Pool > Update Leaderboard.");
+  if (ui) ui.alert("'Results' tab is ready.\n\nGroup scores: columns E/F.\nTeam progress (furthest round): column J.\nKnockout results: columns N–R (teams, score, and who advanced).\n\nThen run Pool > Update Leaderboard.");
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1055,6 +1103,16 @@ function updateLeaderboard() {
   var stage = {};
   tvals.forEach(function(r){ if (r[0]) { var c = _canon(r[0]); if (c) stage[c] = WC_STAGE[r[1]] || 0; } });
 
+  // Actual knockout results → { "R32_1": {a, ga, gb, b, adv} } (teams canonicalized)
+  var kvals = res.getRange(3,12,WC_KO_TOTAL,7).getValues();
+  var koAct = {}, kix = 0;
+  WC_KO_ROUNDS.forEach(function(rd){
+    for (var km = 1; km <= rd[1]; km++) {
+      var kr = kvals[kix++];
+      koAct[rd[0]+"_"+km] = { a:_canon(kr[2]), ga:kr[3], gb:kr[4], b:_canon(kr[5]), adv:_canon(kr[6]) };
+    }
+  });
+
   // Predictions
   var data = pred.getDataRange().getValues();
   var head = data[0], idx = {};
@@ -1069,66 +1127,100 @@ function updateLeaderboard() {
     var name = ("" + val(row, "Name")).trim();
     if (!name) continue;
 
-    // group-stage match points
-    var gp = 0;
+    // ── Group-stage match points, split into outcome (3) vs exact (5) ──
+    var grpOut = 0, grpEx = 0;
     for (var n = 1; n <= 72; n++) {
       var sc = scores[n]; if (!sc) continue;
-      gp += _matchPts(val(row, "P"+n+"_H"), val(row, "P"+n+"_A"), sc.h, sc.a);
+      var p = _matchPts(val(row, "P"+n+"_H"), val(row, "P"+n+"_A"), sc.h, sc.a);
+      if (p === 5) grpEx += 5; else if (p === 3) grpOut += 3;
     }
 
-    // advancement bonuses
-    var bp = 0;
+    // ── Knockout-match scoreline points, split outcome (3) vs exact (5) ──
+    // Earned only when the participant's predicted winner of a slot matches the
+    // team that actually advanced; an exact scoreline awards 5 instead of 3.
+    var koOut = 0, koEx = 0;
+    WC_KO_ROUNDS.forEach(function(rd){
+      for (var m = 1; m <= rd[1]; m++) {
+        var act = koAct[rd[0]+"_"+m];
+        if (!act || !act.adv) continue;                          // need actual winner to score
+        var pw = _canon(val(row, _koWinnerKey(rd[0], m)));
+        if (!pw || pw !== act.adv) continue;                     // wrong (or no) winner → 0
+        var pAteam = _canon(val(row, rd[0]+"_"+m+"_A"));
+        var pBteam = _canon(val(row, rd[0]+"_"+m+"_B"));
+        var pSA = val(row, rd[0]+"_"+m+"_A_S"), pSB = val(row, rd[0]+"_"+m+"_B_S");
+        var pWinG = (pw === pAteam) ? pSA : (pw === pBteam) ? pSB : "";   // predicted winner goals
+        var pLosG = (pw === pAteam) ? pSB : (pw === pBteam) ? pSA : "";   // predicted loser goals
+        var aWinG = (act.adv === act.a) ? act.ga : (act.adv === act.b) ? act.gb : "";
+        var aLosG = (act.adv === act.a) ? act.gb : (act.adv === act.b) ? act.ga : "";
+        var exact = pWinG !== "" && pLosG !== "" && aWinG !== "" && aLosG !== "" &&
+                    !isNaN(Number(pWinG)) && !isNaN(Number(aWinG)) &&
+                    Number(pWinG) === Number(aWinG) && Number(pLosG) === Number(aLosG);
+        if (exact) koEx += 5; else koOut += 3;
+      }
+    });
+
+    // ── Advancement bonuses (per correctly predicted team per tier) ──
     var qual = [];
     groupLetters.forEach(function(g){ qual.push(val(row,"G"+g+"_1")); qual.push(val(row,"G"+g+"_2")); });
-    bp += _tierPts(qual, stage, 1, 5);   // reaches Round of 32
+    var bR32 = _tierPts(qual, stage, 1, 5);
 
     var r16 = []; for (var k=1;k<=8;k++){ r16.push(val(row,"R16_"+k+"_A")); r16.push(val(row,"R16_"+k+"_B")); }
-    bp += _tierPts(r16, stage, 2, 10);
+    var bR16 = _tierPts(r16, stage, 2, 10);
 
     var qf = []; for (var k2=1;k2<=4;k2++){ qf.push(val(row,"QF_"+k2+"_A")); qf.push(val(row,"QF_"+k2+"_B")); }
-    bp += _tierPts(qf, stage, 3, 15);
+    var bQF = _tierPts(qf, stage, 3, 15);
 
     var sf = []; for (var k3=1;k3<=2;k3++){ sf.push(val(row,"SF_"+k3+"_A")); sf.push(val(row,"SF_"+k3+"_B")); }
-    bp += _tierPts(sf, stage, 4, 20);
+    var bSF = _tierPts(sf, stage, 4, 20);
 
     var fin = [val(row,"FIN_1_A"), val(row,"FIN_1_B")];
-    bp += _tierPts(fin, stage, 5, 25);
+    var bFin = _tierPts(fin, stage, 5, 25);
 
-    out.push([name, gp, bp, gp + bp]);
+    var total = grpOut + grpEx + koOut + koEx + bR32 + bR16 + bQF + bSF + bFin;
+    out.push([name, grpOut, grpEx, koOut, koEx, bR32, bR16, bQF, bSF, bFin, total]);
   }
 
-  out.sort(function(a,b){ return b[3] - a[3]; });
+  out.sort(function(a,b){ return b[10] - a[10]; });
 
-  // Write Leaderboard sheet
+  // Write Leaderboard sheet — full per-category point breakdown
   var lb = ss.getSheetByName("Leaderboard");
   if (lb) ss.deleteSheet(lb);
   lb = ss.insertSheet("Leaderboard", 0);
 
-  lb.getRange(1,1,1,5).merge()
-    .setValue("🏆 LEADERBOARD — World Cup 2026 Pool")
+  var NC = 12; // columns A..L
+  lb.getRange(1,1,1,NC).merge()
+    .setValue("🏆 LEADERBOARD — World Cup 2026 Pool  ·  full point breakdown")
     .setBackground(COLOR_HEADER).setFontColor("#ffffff")
     .setFontSize(14).setFontWeight("bold").setHorizontalAlignment("center");
   lb.setRowHeight(1, 38);
-  lb.getRange(2,1,1,5).setValues([["Pos","Participant","Group Pts","Bonus Pts","TOTAL"]])
-    .setBackground(COLOR_SUBHDR).setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center");
+  lb.getRange(2,1,1,NC).setValues([[
+    "Pos","Participant",
+    "Group ✓ (×3)","Group 🎯 (×5)",
+    "KO ✓ (×3)","KO 🎯 (×5)",
+    "R32 +5","R16 +10","QF +15","SF +20","Final +25","TOTAL"
+  ]]).setBackground(COLOR_SUBHDR).setFontColor("#ffffff").setFontWeight("bold")
+     .setHorizontalAlignment("center").setWrap(true);
+  lb.setRowHeight(2, 34);
 
   if (out.length) {
     var rows2 = out.map(function(r, i){
       var pos = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
-      return [pos, r[0], r[1], r[2], r[3]];
+      return [pos, r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10]];
     });
-    lb.getRange(3,1,rows2.length,5).setValues(rows2);
-    lb.getRange(3,5,rows2.length,1).setFontWeight("bold").setBackground("#d5e8d4");
+    lb.getRange(3,1,rows2.length,NC).setValues(rows2);
+    lb.getRange(3,NC,rows2.length,1).setFontWeight("bold").setBackground("#d5e8d4");
     lb.getRange(3,1,rows2.length,1).setHorizontalAlignment("center").setFontWeight("bold");
+    lb.getRange(3,3,rows2.length,NC-2).setHorizontalAlignment("center");
   } else {
     lb.getRange(3,1).setValue("No scored participants yet.").setFontStyle("italic").setFontColor("#999999");
   }
 
-  [55,220,110,110,90].forEach(function(w,c){ lb.setColumnWidth(c+1,w); });
+  [50,180,95,95,85,85,70,75,70,70,75,80].forEach(function(w,c){ lb.setColumnWidth(c+1,w); });
   lb.setFrozenRows(2);
+  lb.setFrozenColumns(2);
   ss.setActiveSheet(lb);
 
-  if (ui) ui.alert("Leaderboard updated — " + out.length + " participant(s) ranked.");
+  if (ui) ui.alert("Leaderboard updated — " + out.length + " participant(s) ranked.\n\nEach point category is now broken out per participant.");
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1152,15 +1244,17 @@ function showRules() {
   var ui = _ui(); if (!ui) return;
   ui.alert(
     "RULES — World Cup 2026 Pool  v" + VERSION + "\n\n" +
-    "PER MATCH (group stage):\n" +
-    "  Correct outcome or draw: 3 pts\n" +
-    "  Exact score: 5 pts\n\n" +
+    "PER MATCH (every match — group AND knockout):\n" +
+    "  Correct outcome / advancing team: 3 pts\n" +
+    "  Exact score: 5 pts\n" +
+    "  (Knockout points need the right winner first; the exact scoreline then makes it 5.)\n\n" +
     "ADVANCEMENT BONUSES (per correctly predicted team):\n" +
     "  Reaches Round of 32 (advances from group): +5 pts\n" +
     "  Reaches Round of 16: +10 pts\n" +
     "  Reaches Quarterfinals: +15 pts\n" +
     "  Reaches Semifinals: +20 pts\n" +
     "  Reaches the Final: +25 pts\n\n" +
+    "The Leaderboard shows a full per-category breakdown of every point.\n" +
     "Most points at the end of the tournament wins."
   );
 }
