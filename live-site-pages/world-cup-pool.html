@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Quiniela Mundial 2026</title>
+<title>FIFA World Cup 2026 Pool</title>
 <style>
   :root{
     --blue:#003DA5; --blue2:#0a52c9; --red:#c8102e; --gold:#d4af37;
@@ -115,36 +115,36 @@
 <body>
 <header>
   <div class="flag">🇨🇦 🇲🇽 🇺🇸</div>
-  <h1>QUINIELA MUNDIAL 2026</h1>
-  <div class="sub">Predice todos los partidos · Llena el cuadro completo · Gana la quiniela</div>
+  <h1>FIFA WORLD CUP 2026 POOL</h1>
+  <div class="sub">Predict every match · Fill out the full bracket · Win the pool</div>
 </header>
 
 <div class="wrap">
 
   <!-- Participant info -->
   <div class="card">
-    <h2>👤 Tus Datos</h2>
+    <h2>👤 Your Info</h2>
     <div class="body">
-      <label class="fld">Nombre completo *</label>
-      <input type="text" data-key="Nombre" id="f_name" placeholder="Tu nombre y apellido" />
-      <label class="fld">Correo electrónico</label>
-      <input type="email" data-key="Correo" placeholder="opcional" />
-      <label class="fld">Teléfono / WhatsApp</label>
-      <input type="tel" data-key="Telefono" placeholder="opcional" />
+      <label class="fld">Full Name *</label>
+      <input type="text" data-key="Name" id="f_name" placeholder="Your full name" />
+      <label class="fld">Email</label>
+      <input type="email" data-key="Email" placeholder="optional" />
+      <label class="fld">Phone / WhatsApp</label>
+      <input type="tel" data-key="Phone" placeholder="optional" />
     </div>
   </div>
 
   <!-- Scoring -->
   <div class="card">
-    <h2>🏅 Cómo se Puntúa</h2>
+    <h2>🏅 How Scoring Works</h2>
     <div class="body legend">
-      <div class="lg"><span class="ic">✅</span><span>Acertar el ganador <em>o</em> el empate de un partido</span><span class="pts">3 pts</span></div>
-      <div class="lg"><span class="ic">🎯</span><span>Acertar el marcador exacto del partido</span><span class="pts">5 pts</span></div>
-      <div class="lg"><span class="ic">🟢</span><span>Cada equipo que aciertes que pasa a 16avos (de grupo)</span><span class="pts">+5 pts</span></div>
-      <div class="lg"><span class="ic">🔵</span><span>Cada equipo que aciertes que llega a Octavos</span><span class="pts">+10 pts</span></div>
-      <div class="lg"><span class="ic">🟣</span><span>Cada equipo que aciertes que llega a Cuartos</span><span class="pts">+15 pts</span></div>
-      <div class="lg"><span class="ic">🔴</span><span>Cada equipo que aciertes que llega a Semifinal</span><span class="pts">+20 pts</span></div>
-      <div class="lg"><span class="ic">🏆</span><span>Cada equipo que aciertes que llega a la Final</span><span class="pts">+25 pts</span></div>
+      <div class="lg"><span class="ic">✅</span><span>Correct winner <em>or</em> correct draw prediction</span><span class="pts">3 pts</span></div>
+      <div class="lg"><span class="ic">🎯</span><span>Correct outcome + exact score</span><span class="pts">5 pts</span></div>
+      <div class="lg"><span class="ic">🟢</span><span>Each team you predict correctly advances from their group</span><span class="pts">+5 pts</span></div>
+      <div class="lg"><span class="ic">🔵</span><span>Each team you predict correctly reaches Round of 16</span><span class="pts">+10 pts</span></div>
+      <div class="lg"><span class="ic">🟣</span><span>Each team you predict correctly reaches Quarterfinals</span><span class="pts">+15 pts</span></div>
+      <div class="lg"><span class="ic">🔴</span><span>Each team you predict correctly reaches Semifinals</span><span class="pts">+20 pts</span></div>
+      <div class="lg"><span class="ic">🏆</span><span>Each team you predict correctly reaches the Final</span><span class="pts">+25 pts</span></div>
     </div>
   </div>
 
@@ -153,25 +153,25 @@
 
   <!-- Knockout -->
   <div class="card">
-    <h2>🏆 Fase Eliminatoria</h2>
-    <div class="ko-note">Escribe el equipo que predices en cada llave, desde 16avos hasta la Final. Predícelo todo desde ahora — los equipos que pongas en cada ronda valen puntos extra si aciertas.</div>
+    <h2>🏆 Knockout Stage</h2>
+    <div class="ko-note">Fill in the teams you predict for every knockout match, starting from the Round of 32 all the way to the Final. Predict everything now — you earn bonus points for each team that actually makes it to that round.</div>
     <div id="knockout"></div>
     <div style="padding:14px;">
       <div class="champ">
-        <label>🏆 Mi Campeón del Mundo 2026</label>
-        <input type="text" data-key="CAMPEON" placeholder="Escribe tu campeón" />
+        <label>🏆 My 2026 World Cup Champion</label>
+        <input type="text" data-key="CHAMPION" placeholder="Write your champion pick" />
       </div>
     </div>
   </div>
 
-  <div class="footnote">FIFA World Cup 2026™ · 11 jun – 19 jul · Quiniela no oficial</div>
+  <div class="footnote">FIFA World Cup 2026™ · Jun 11 – Jul 19 · Unofficial pool</div>
 </div>
 
 <!-- Submit bar -->
 <div class="subbar">
   <div class="wrap">
-    <div id="progress">Partidos llenados: <b id="filled">0</b> / 72</div>
-    <button class="submit" id="submitBtn" type="button">ENVIAR ▸</button>
+    <div id="progress">Matches filled: <b id="filled">0</b> / 72</div>
+    <button class="submit" id="submitBtn" type="button">SUBMIT ▸</button>
   </div>
 </div>
 
@@ -223,42 +223,42 @@ var GROUPS = {
 
 // [match#, date, group, matchday, home, away]
 var FIXTURES = [
-  [1,"11 Jun","A",1,"Mexico","South Africa"],[2,"11 Jun","A",1,"South Korea","Czechia"],
-  [3,"18 Jun","A",2,"Czechia","South Africa"],[4,"18 Jun","A",2,"Mexico","South Korea"],
-  [5,"24 Jun","A",3,"Mexico","Czechia"],[6,"24 Jun","A",3,"South Korea","South Africa"],
-  [7,"12 Jun","B",1,"Canada","Bosnia-Herzegovina"],[8,"13 Jun","B",1,"Qatar","Switzerland"],
-  [9,"18 Jun","B",2,"Switzerland","Bosnia-Herzegovina"],[10,"18 Jun","B",2,"Canada","Qatar"],
-  [11,"24 Jun","B",3,"Switzerland","Canada"],[12,"24 Jun","B",3,"Bosnia-Herzegovina","Qatar"],
-  [13,"13 Jun","C",1,"Brazil","Morocco"],[14,"13 Jun","C",1,"Haiti","Scotland"],
-  [15,"19 Jun","C",2,"Scotland","Morocco"],[16,"19 Jun","C",2,"Brazil","Haiti"],
-  [17,"24 Jun","C",3,"Brazil","Scotland"],[18,"24 Jun","C",3,"Morocco","Haiti"],
-  [19,"12 Jun","D",1,"USA","Paraguay"],[20,"13 Jun","D",1,"Australia","Türkiye"],
-  [21,"19 Jun","D",2,"USA","Australia"],[22,"19 Jun","D",2,"Türkiye","Paraguay"],
-  [23,"25 Jun","D",3,"USA","Türkiye"],[24,"25 Jun","D",3,"Paraguay","Australia"],
-  [25,"14 Jun","E",1,"Germany","Curaçao"],[26,"14 Jun","E",1,"Ivory Coast","Ecuador"],
-  [27,"20 Jun","E",2,"Germany","Ivory Coast"],[28,"20 Jun","E",2,"Ecuador","Curaçao"],
-  [29,"25 Jun","E",3,"Ecuador","Germany"],[30,"25 Jun","E",3,"Curaçao","Ivory Coast"],
-  [31,"14 Jun","F",1,"Netherlands","Japan"],[32,"14 Jun","F",1,"Tunisia","Sweden"],
-  [33,"20 Jun","F",2,"Netherlands","Sweden"],[34,"20 Jun","F",2,"Tunisia","Japan"],
-  [35,"25 Jun","F",3,"Tunisia","Netherlands"],[36,"25 Jun","F",3,"Japan","Sweden"],
-  [37,"15 Jun","G",1,"Belgium","Egypt"],[38,"15 Jun","G",1,"Iran","New Zealand"],
-  [39,"21 Jun","G",2,"Belgium","Iran"],[40,"21 Jun","G",2,"New Zealand","Egypt"],
-  [41,"26 Jun","G",3,"New Zealand","Belgium"],[42,"26 Jun","G",3,"Egypt","Iran"],
-  [43,"15 Jun","H",1,"Spain","Cape Verde"],[44,"15 Jun","H",1,"Saudi Arabia","Uruguay"],
-  [45,"21 Jun","H",2,"Spain","Saudi Arabia"],[46,"21 Jun","H",2,"Uruguay","Cape Verde"],
-  [47,"26 Jun","H",3,"Uruguay","Spain"],[48,"26 Jun","H",3,"Cape Verde","Saudi Arabia"],
-  [49,"16 Jun","I",1,"France","Senegal"],[50,"16 Jun","I",1,"Iraq","Norway"],
-  [51,"22 Jun","I",2,"France","Iraq"],[52,"22 Jun","I",2,"Norway","Senegal"],
-  [53,"26 Jun","I",3,"Norway","France"],[54,"26 Jun","I",3,"Senegal","Iraq"],
-  [55,"16 Jun","J",1,"Argentina","Algeria"],[56,"16 Jun","J",1,"Austria","Jordan"],
-  [57,"22 Jun","J",2,"Argentina","Austria"],[58,"22 Jun","J",2,"Jordan","Algeria"],
-  [59,"27 Jun","J",3,"Algeria","Austria"],[60,"27 Jun","J",3,"Jordan","Argentina"],
-  [61,"17 Jun","K",1,"Portugal","DR Congo"],[62,"17 Jun","K",1,"Uzbekistan","Colombia"],
-  [63,"23 Jun","K",2,"Portugal","Uzbekistan"],[64,"23 Jun","K",2,"Colombia","DR Congo"],
-  [65,"27 Jun","K",3,"Colombia","Portugal"],[66,"27 Jun","K",3,"DR Congo","Uzbekistan"],
-  [67,"17 Jun","L",1,"England","Croatia"],[68,"17 Jun","L",1,"Ghana","Panama"],
-  [69,"23 Jun","L",2,"England","Ghana"],[70,"23 Jun","L",2,"Panama","Croatia"],
-  [71,"27 Jun","L",3,"Panama","England"],[72,"27 Jun","L",3,"Croatia","Ghana"]
+  [1,"Jun 11","A",1,"Mexico","South Africa"],[2,"Jun 11","A",1,"South Korea","Czechia"],
+  [3,"Jun 18","A",2,"Czechia","South Africa"],[4,"Jun 18","A",2,"Mexico","South Korea"],
+  [5,"Jun 24","A",3,"Mexico","Czechia"],[6,"Jun 24","A",3,"South Korea","South Africa"],
+  [7,"Jun 12","B",1,"Canada","Bosnia-Herzegovina"],[8,"Jun 13","B",1,"Qatar","Switzerland"],
+  [9,"Jun 18","B",2,"Switzerland","Bosnia-Herzegovina"],[10,"Jun 18","B",2,"Canada","Qatar"],
+  [11,"Jun 24","B",3,"Switzerland","Canada"],[12,"Jun 24","B",3,"Bosnia-Herzegovina","Qatar"],
+  [13,"Jun 13","C",1,"Brazil","Morocco"],[14,"Jun 13","C",1,"Haiti","Scotland"],
+  [15,"Jun 19","C",2,"Scotland","Morocco"],[16,"Jun 19","C",2,"Brazil","Haiti"],
+  [17,"Jun 24","C",3,"Brazil","Scotland"],[18,"Jun 24","C",3,"Morocco","Haiti"],
+  [19,"Jun 12","D",1,"USA","Paraguay"],[20,"Jun 13","D",1,"Australia","Türkiye"],
+  [21,"Jun 19","D",2,"USA","Australia"],[22,"Jun 19","D",2,"Türkiye","Paraguay"],
+  [23,"Jun 25","D",3,"USA","Türkiye"],[24,"Jun 25","D",3,"Paraguay","Australia"],
+  [25,"Jun 14","E",1,"Germany","Curaçao"],[26,"Jun 14","E",1,"Ivory Coast","Ecuador"],
+  [27,"Jun 20","E",2,"Germany","Ivory Coast"],[28,"Jun 20","E",2,"Ecuador","Curaçao"],
+  [29,"Jun 25","E",3,"Ecuador","Germany"],[30,"Jun 25","E",3,"Curaçao","Ivory Coast"],
+  [31,"Jun 14","F",1,"Netherlands","Japan"],[32,"Jun 14","F",1,"Tunisia","Sweden"],
+  [33,"Jun 20","F",2,"Netherlands","Sweden"],[34,"Jun 20","F",2,"Tunisia","Japan"],
+  [35,"Jun 25","F",3,"Tunisia","Netherlands"],[36,"Jun 25","F",3,"Japan","Sweden"],
+  [37,"Jun 15","G",1,"Belgium","Egypt"],[38,"Jun 15","G",1,"Iran","New Zealand"],
+  [39,"Jun 21","G",2,"Belgium","Iran"],[40,"Jun 21","G",2,"New Zealand","Egypt"],
+  [41,"Jun 26","G",3,"New Zealand","Belgium"],[42,"Jun 26","G",3,"Egypt","Iran"],
+  [43,"Jun 15","H",1,"Spain","Cape Verde"],[44,"Jun 15","H",1,"Saudi Arabia","Uruguay"],
+  [45,"Jun 21","H",2,"Spain","Saudi Arabia"],[46,"Jun 21","H",2,"Uruguay","Cape Verde"],
+  [47,"Jun 26","H",3,"Uruguay","Spain"],[48,"Jun 26","H",3,"Cape Verde","Saudi Arabia"],
+  [49,"Jun 16","I",1,"France","Senegal"],[50,"Jun 16","I",1,"Iraq","Norway"],
+  [51,"Jun 22","I",2,"France","Iraq"],[52,"Jun 22","I",2,"Norway","Senegal"],
+  [53,"Jun 26","I",3,"Norway","France"],[54,"Jun 26","I",3,"Senegal","Iraq"],
+  [55,"Jun 16","J",1,"Argentina","Algeria"],[56,"Jun 16","J",1,"Austria","Jordan"],
+  [57,"Jun 22","J",2,"Argentina","Austria"],[58,"Jun 22","J",2,"Jordan","Algeria"],
+  [59,"Jun 27","J",3,"Algeria","Austria"],[60,"Jun 27","J",3,"Jordan","Argentina"],
+  [61,"Jun 17","K",1,"Portugal","DR Congo"],[62,"Jun 17","K",1,"Uzbekistan","Colombia"],
+  [63,"Jun 23","K",2,"Portugal","Uzbekistan"],[64,"Jun 23","K",2,"Colombia","DR Congo"],
+  [65,"Jun 27","K",3,"Colombia","Portugal"],[66,"Jun 27","K",3,"DR Congo","Uzbekistan"],
+  [67,"Jun 17","L",1,"England","Croatia"],[68,"Jun 17","L",1,"Ghana","Panama"],
+  [69,"Jun 23","L",2,"England","Ghana"],[70,"Jun 23","L",2,"Panama","Croatia"],
+  [71,"Jun 27","L",3,"Panama","England"],[72,"Jun 27","L",3,"Croatia","Ghana"]
 ];
 
 var GROUP_COLORS = {A:"#003DA5",B:"#0a7e3f",C:"#c8102e",D:"#7b1fa2",E:"#00838f",
@@ -271,26 +271,26 @@ Object.keys(GROUPS).forEach(function(g){
   var card = document.createElement("div");
   card.className = "card";
   var teamsLine = GROUPS[g].map(function(t){ return fl(t)+" "+t; }).join("  ·  ");
-  var h = '<h2><span class="grp-letter" style="background:'+GROUP_COLORS[g]+';color:#fff">'+g+'</span> Grupo '+g+'</h2>';
+  var h = '<h2><span class="grp-letter" style="background:'+GROUP_COLORS[g]+';color:#fff">'+g+'</span> Group '+g+'</h2>';
   h += '<div class="body"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">'+teamsLine+'</div>';
   var lastMd = 0;
   matches.forEach(function(m){
-    if (m[3] !== lastMd){ h += '<div class="md-tag">Jornada '+m[3]+'</div>'; lastMd = m[3]; }
+    if (m[3] !== lastMd){ h += '<div class="md-tag">Matchday '+m[3]+' &nbsp;·&nbsp; '+m[1]+'</div>'; lastMd = m[3]; }
     h += '<div class="match">'
       + '<span class="t home">'+m[4]+' <span class="fl">'+fl(m[4])+'</span></span>'
-      + '<input class="score gscore" inputmode="numeric" maxlength="2" data-key="P'+m[0]+'_L" />'
+      + '<input class="score gscore" inputmode="numeric" maxlength="2" data-key="P'+m[0]+'_H" />'
       + '<span class="dash">–</span>'
-      + '<input class="score gscore" inputmode="numeric" maxlength="2" data-key="P'+m[0]+'_V" />'
+      + '<input class="score gscore" inputmode="numeric" maxlength="2" data-key="P'+m[0]+'_A" />'
       + '<span class="t away"><span class="fl">'+fl(m[5])+'</span> '+m[5]+'</span>'
       + '</div>';
   });
   // qualifier picks
-  var opts = '<option value="">— elige —</option>' + GROUPS[g].map(function(t){
+  var opts = '<option value="">— select —</option>' + GROUPS[g].map(function(t){
     return '<option value="'+t+'">'+t+'</option>'; }).join("");
-  h += '<div class="qualifiers"><div class="qt">¿Quién clasifica de este grupo? (+5 pts por equipo)</div>'
+  h += '<div class="qualifiers"><div class="qt">Who advances from this group? (+5 pts per correct team)</div>'
      + '<div class="qrow">'
-     + '<div><label>🥇 1° Lugar</label><select data-key="G'+g+'_1">'+opts+'</select></div>'
-     + '<div><label>🥈 2° Lugar</label><select data-key="G'+g+'_2">'+opts+'</select></div>'
+     + '<div><label>🥇 1st Place</label><select data-key="G'+g+'_1">'+opts+'</select></div>'
+     + '<div><label>🥈 2nd Place</label><select data-key="G'+g+'_2">'+opts+'</select></div>'
      + '</div></div>';
   h += '</div>';
   card.innerHTML = h;
@@ -299,12 +299,12 @@ Object.keys(GROUPS).forEach(function(g){
 
 // ─── Build knockout ─────────────────────────────────────────────────────────
 var KO_ROUNDS = [
-  {key:"R32", name:"16avos de Final", count:16, bonus:"+5 pts/equipo", cls:""},
-  {key:"R16", name:"Octavos de Final", count:8,  bonus:"+10 pts/equipo", cls:""},
-  {key:"QF",  name:"Cuartos de Final", count:4,  bonus:"+15 pts/equipo", cls:""},
-  {key:"SF",  name:"Semifinales",      count:2,  bonus:"+20 pts/equipo", cls:""},
-  {key:"3RD", name:"Tercer Lugar",     count:1,  bonus:"3/5 pts",        cls:""},
-  {key:"FIN", name:"FINAL",            count:1,  bonus:"+25 pts/equipo", cls:"final"}
+  {key:"R32", name:"Round of 32",    count:16, bonus:"+5 pts/team",  cls:""},
+  {key:"R16", name:"Round of 16",    count:8,  bonus:"+10 pts/team", cls:""},
+  {key:"QF",  name:"Quarterfinals",  count:4,  bonus:"+15 pts/team", cls:""},
+  {key:"SF",  name:"Semifinals",     count:2,  bonus:"+20 pts/team", cls:""},
+  {key:"3RD", name:"Third Place",    count:1,  bonus:"3 / 5 pts",    cls:""},
+  {key:"FIN", name:"FINAL",          count:1,  bonus:"+25 pts/team", cls:"final"}
 ];
 var koEl = document.getElementById("knockout");
 KO_ROUNDS.forEach(function(r){
@@ -314,11 +314,11 @@ KO_ROUNDS.forEach(function(r){
   for (var i=1;i<=r.count;i++){
     h += '<div class="ko-match">'
       + '<span class="ko-num">'+i+'</span>'
-      + '<span class="tn"><input type="text" data-key="'+r.key+'_'+i+'_A" placeholder="Equipo" /></span>'
+      + '<span class="tn"><input type="text" data-key="'+r.key+'_'+i+'_A" placeholder="Team" /></span>'
       + '<input class="score sc" inputmode="numeric" maxlength="2" data-key="'+r.key+'_'+i+'_SA" />'
       + '<span class="dash">–</span>'
       + '<input class="score sc" inputmode="numeric" maxlength="2" data-key="'+r.key+'_'+i+'_SB" />'
-      + '<span class="tn"><input type="text" data-key="'+r.key+'_'+i+'_B" placeholder="Equipo" /></span>'
+      + '<span class="tn"><input type="text" data-key="'+r.key+'_'+i+'_B" placeholder="Team" /></span>'
       + '</div>';
   }
   div.innerHTML = h;
@@ -330,8 +330,8 @@ var filledEl = document.getElementById("filled");
 function updateProgress(){
   var n = 0;
   for (var i=1;i<=72;i++){
-    var a = document.querySelector('[data-key="P'+i+'_L"]');
-    var b = document.querySelector('[data-key="P'+i+'_V"]');
+    var a = document.querySelector('[data-key="P'+i+'_H"]');
+    var b = document.querySelector('[data-key="P'+i+'_A"]');
     if (a && b && a.value !== "" && b.value !== "") n++;
   }
   filledEl.textContent = n;
@@ -343,12 +343,11 @@ document.addEventListener("input", function(e){
 // ─── Submit ─────────────────────────────────────────────────────────────────
 var submitting = false;
 function showModal(html){ document.getElementById("modal").innerHTML = html; document.getElementById("overlay").classList.add("show"); }
-function hideModal(){ document.getElementById("overlay").classList.remove("show"); }
 
 document.getElementById("submitBtn").addEventListener("click", function(){
   var name = document.getElementById("f_name").value.trim();
   if (!name){
-    showModal('<div class="big">✋</div><h3>Falta tu nombre</h3><p>Por favor escribe tu nombre completo arriba antes de enviar.</p><button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Entendido</button>');
+    showModal('<div class="big">✋</div><h3>Name required</h3><p>Please enter your full name at the top before submitting.</p><button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">OK</button>');
     return;
   }
   if (submitting) return;
@@ -360,22 +359,20 @@ document.getElementById("submitBtn").addEventListener("click", function(){
   });
 
   document.getElementById("payload").value = JSON.stringify(data);
-  showModal('<div class="spinner"></div><h3>Enviando…</h3><p>Guardando tus predicciones</p>');
+  showModal('<div class="spinner"></div><h3>Submitting…</h3><p>Saving your predictions</p>');
 
-  // The hidden iframe loads the Apps Script response; that's our success signal.
   var frame = document.getElementById("hiddenFrame");
   var done = false;
   frame.onload = function(){
     if (done) return; done = true;
-    showModal('<div class="big">✅</div><h3>¡Listo, '+name.split(" ")[0]+'!</h3>'
-      + '<p>Tus predicciones se enviaron correctamente al organizador.</p>'
-      + '<p style="margin-top:8px;font-size:12px">Toma una captura de pantalla como respaldo. ¡Mucha suerte! 🍀</p>'
-      + '<button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Cerrar</button>');
+    showModal('<div class="big">✅</div><h3>You\'re in, '+name.split(" ")[0]+'!</h3>'
+      + '<p>Your predictions have been sent to the organizer.</p>'
+      + '<p style="margin-top:8px;font-size:12px">Take a screenshot as a backup. Good luck! 🍀</p>'
+      + '<button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Close</button>');
   };
-  // safety timeout in case onload is slow
   setTimeout(function(){
     if (done) return; done = true;
-    showModal('<div class="big">✅</div><h3>¡Enviado!</h3><p>Si no estás seguro, toma una captura y avisa al organizador.</p><button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Cerrar</button>');
+    showModal('<div class="big">✅</div><h3>Submitted!</h3><p>If you\'re unsure it went through, take a screenshot and let the organizer know.</p><button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Close</button>');
   }, 6000);
 
   document.getElementById("poolForm").submit();
