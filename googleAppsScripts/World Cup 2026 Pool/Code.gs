@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.03g";
+var VERSION        = "01.04g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -710,38 +710,307 @@ function _setupBracketSheet(sheet) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+//  LEADERBOARD SYSTEM  —  scores web-form submissions ("Predicciones")
+//  against the organizer-entered "Results" tab.
+//
+//  Scoring:
+//    Group match  : exact score = 5 pts · correct outcome (incl. draw) = 3 pts
+//    Advancement  : +5  per correct group qualifier (team reaches Round of 32)
+//                   +10 per team correctly predicted to reach Round of 16
+//                   +15 per team correctly predicted to reach Quarterfinals
+//                   +20 per team correctly predicted to reach Semifinals
+//                   +25 per team correctly predicted to reach the Final
+// ═════════════════════════════════════════════════════════════════════════════
+
+// Canonical teams (must match the spellings used in the web form / Predicciones)
+var WC_GROUPS = {
+  "A":["Mexico","South Africa","South Korea","Czechia"],
+  "B":["Canada","Bosnia-Herzegovina","Qatar","Switzerland"],
+  "C":["Brazil","Morocco","Haiti","Scotland"],
+  "D":["USA","Paraguay","Australia","Türkiye"],
+  "E":["Germany","Curaçao","Ivory Coast","Ecuador"],
+  "F":["Netherlands","Japan","Sweden","Tunisia"],
+  "G":["Belgium","Egypt","Iran","New Zealand"],
+  "H":["Spain","Cape Verde","Saudi Arabia","Uruguay"],
+  "I":["France","Senegal","Iraq","Norway"],
+  "J":["Argentina","Algeria","Austria","Jordan"],
+  "K":["Portugal","DR Congo","Uzbekistan","Colombia"],
+  "L":["England","Croatia","Ghana","Panama"]
+};
+
+// [match#, date, group, matchday, home, away]
+var WC_FIXTURES = [
+  [1,"Jun 11","A",1,"Mexico","South Africa"],[2,"Jun 11","A",1,"South Korea","Czechia"],
+  [3,"Jun 18","A",2,"Czechia","South Africa"],[4,"Jun 18","A",2,"Mexico","South Korea"],
+  [5,"Jun 24","A",3,"Mexico","Czechia"],[6,"Jun 24","A",3,"South Korea","South Africa"],
+  [7,"Jun 12","B",1,"Canada","Bosnia-Herzegovina"],[8,"Jun 13","B",1,"Qatar","Switzerland"],
+  [9,"Jun 18","B",2,"Switzerland","Bosnia-Herzegovina"],[10,"Jun 18","B",2,"Canada","Qatar"],
+  [11,"Jun 24","B",3,"Switzerland","Canada"],[12,"Jun 24","B",3,"Bosnia-Herzegovina","Qatar"],
+  [13,"Jun 13","C",1,"Brazil","Morocco"],[14,"Jun 13","C",1,"Haiti","Scotland"],
+  [15,"Jun 19","C",2,"Scotland","Morocco"],[16,"Jun 19","C",2,"Brazil","Haiti"],
+  [17,"Jun 24","C",3,"Brazil","Scotland"],[18,"Jun 24","C",3,"Morocco","Haiti"],
+  [19,"Jun 12","D",1,"USA","Paraguay"],[20,"Jun 13","D",1,"Australia","Türkiye"],
+  [21,"Jun 19","D",2,"USA","Australia"],[22,"Jun 19","D",2,"Türkiye","Paraguay"],
+  [23,"Jun 25","D",3,"USA","Türkiye"],[24,"Jun 25","D",3,"Paraguay","Australia"],
+  [25,"Jun 14","E",1,"Germany","Curaçao"],[26,"Jun 14","E",1,"Ivory Coast","Ecuador"],
+  [27,"Jun 20","E",2,"Germany","Ivory Coast"],[28,"Jun 20","E",2,"Ecuador","Curaçao"],
+  [29,"Jun 25","E",3,"Ecuador","Germany"],[30,"Jun 25","E",3,"Curaçao","Ivory Coast"],
+  [31,"Jun 14","F",1,"Netherlands","Japan"],[32,"Jun 14","F",1,"Tunisia","Sweden"],
+  [33,"Jun 20","F",2,"Netherlands","Sweden"],[34,"Jun 20","F",2,"Tunisia","Japan"],
+  [35,"Jun 25","F",3,"Tunisia","Netherlands"],[36,"Jun 25","F",3,"Japan","Sweden"],
+  [37,"Jun 15","G",1,"Belgium","Egypt"],[38,"Jun 15","G",1,"Iran","New Zealand"],
+  [39,"Jun 21","G",2,"Belgium","Iran"],[40,"Jun 21","G",2,"New Zealand","Egypt"],
+  [41,"Jun 26","G",3,"New Zealand","Belgium"],[42,"Jun 26","G",3,"Egypt","Iran"],
+  [43,"Jun 15","H",1,"Spain","Cape Verde"],[44,"Jun 15","H",1,"Saudi Arabia","Uruguay"],
+  [45,"Jun 21","H",2,"Spain","Saudi Arabia"],[46,"Jun 21","H",2,"Uruguay","Cape Verde"],
+  [47,"Jun 26","H",3,"Uruguay","Spain"],[48,"Jun 26","H",3,"Cape Verde","Saudi Arabia"],
+  [49,"Jun 16","I",1,"France","Senegal"],[50,"Jun 16","I",1,"Iraq","Norway"],
+  [51,"Jun 22","I",2,"France","Iraq"],[52,"Jun 22","I",2,"Norway","Senegal"],
+  [53,"Jun 26","I",3,"Norway","France"],[54,"Jun 26","I",3,"Senegal","Iraq"],
+  [55,"Jun 16","J",1,"Argentina","Algeria"],[56,"Jun 16","J",1,"Austria","Jordan"],
+  [57,"Jun 22","J",2,"Argentina","Austria"],[58,"Jun 22","J",2,"Jordan","Algeria"],
+  [59,"Jun 27","J",3,"Algeria","Austria"],[60,"Jun 27","J",3,"Jordan","Argentina"],
+  [61,"Jun 17","K",1,"Portugal","DR Congo"],[62,"Jun 17","K",1,"Uzbekistan","Colombia"],
+  [63,"Jun 23","K",2,"Portugal","Uzbekistan"],[64,"Jun 23","K",2,"Colombia","DR Congo"],
+  [65,"Jun 27","K",3,"Colombia","Portugal"],[66,"Jun 27","K",3,"DR Congo","Uzbekistan"],
+  [67,"Jun 17","L",1,"England","Croatia"],[68,"Jun 17","L",1,"Ghana","Panama"],
+  [69,"Jun 23","L",2,"England","Ghana"],[70,"Jun 23","L",2,"Panama","Croatia"],
+  [71,"Jun 27","L",3,"Panama","England"],[72,"Jun 27","L",3,"Croatia","Ghana"]
+];
+
+var WC_STAGE_LIST = ["Group","R32","R16","QF","SF","Final","Champion"];
+var WC_STAGE = {"Group":0,"R32":1,"R16":2,"QF":3,"SF":4,"Final":5,"Champion":6};
+
+// Normalized-name → canonical-name map (built once, includes common aliases)
+var WC_CANON = (function() {
+  var map = {};
+  function norm(s){ return ("" + s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,""); }
+  Object.keys(WC_GROUPS).forEach(function(g){
+    WC_GROUPS[g].forEach(function(t){ map[norm(t)] = t; });
+  });
+  var alias = {
+    "czechrepublic":"Czechia","czech":"Czechia",
+    "turkey":"Türkiye",
+    "korea":"South Korea","korearepublic":"South Korea","republicofkorea":"South Korea",
+    "unitedstates":"USA","unitedstatesofamerica":"USA","us":"USA",
+    "holland":"Netherlands",
+    "cotedivoire":"Ivory Coast",
+    "caboverde":"Cape Verde",
+    "democraticrepublicofcongo":"DR Congo","congodr":"DR Congo","congo":"DR Congo",
+    "bosnia":"Bosnia-Herzegovina","bosniaandherzegovina":"Bosnia-Herzegovina",
+    "saudi":"Saudi Arabia",
+    "uae":"Saudi Arabia"
+  };
+  Object.keys(alias).forEach(function(k){ if (!map[k]) map[k] = alias[k]; });
+  return map;
+})();
+
+function _norm(s){ return ("" + s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,""); }
+function _canon(s){ var n = _norm(s); return WC_CANON[n] || null; }
+
+function _matchPts(ph, pa, ah, aa) {
+  if (ph === "" || pa === "" || ph == null || pa == null) return 0;
+  ph = Number(ph); pa = Number(pa);
+  if (isNaN(ph) || isNaN(pa)) return 0;
+  if (ph === ah && pa === aa) return 5;
+  return (Math.sign(ph - pa) === Math.sign(ah - aa)) ? 3 : 0;
+}
+
+// Sum bonus points for a list of predicted team names whose actual stage >= minRank
+function _tierPts(teams, stage, minRank, pts) {
+  var seen = {}, total = 0;
+  teams.forEach(function(t) {
+    t = ("" + t).trim(); if (!t) return;
+    var c = _canon(t); if (!c) return;
+    if (seen[c]) return; seen[c] = true;
+    if ((stage[c] || 0) >= minRank) total += pts;
+  });
+  return total;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  RESULTS TAB  —  organizer enters actual scores + how far each team got
+// ═════════════════════════════════════════════════════════════════════════════
+function setupResultsTab() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sh = ss.getSheetByName("Results");
+  if (sh) ss.deleteSheet(sh);
+  sh = ss.insertSheet("Results", 0);
+
+  // ── Section 1: group match scores (A:G) ──
+  sh.getRange(1,1,1,7).merge()
+    .setValue("ACTUAL RESULTS — type each match's final score (Home Goals / Away Goals)")
+    .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sh.getRange(2,1,1,7).setValues([["#","Date","Group","Home","Home Goals","Away Goals","Away"]])
+    .setBackground(COLOR_SUBHDR).setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center");
+
+  var rows = WC_FIXTURES.map(function(f){ return [f[0],f[1],f[2],f[4],"","",f[5]]; });
+  sh.getRange(3,1,rows.length,7).setValues(rows);
+  for (var i = 0; i < WC_FIXTURES.length; i++) {
+    var r  = i + 3;
+    var gc = GROUP_COLORS[WC_FIXTURES[i][2]] || "#ffffff";
+    sh.getRange(r,1,1,7).setBackground(gc);
+    sh.getRange(r,5,1,2).setBackground(COLOR_INPUT);
+  }
+
+  // ── Section 2: team progress (I:J) ──
+  sh.getRange(1,9,1,2).merge()
+    .setValue("TEAM PROGRESS — set how far each team actually got")
+    .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sh.getRange(2,9,1,2).setValues([["Team","Furthest Round Reached"]])
+    .setBackground(COLOR_SUBHDR).setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center");
+
+  var teams = [];
+  Object.keys(WC_GROUPS).forEach(function(g){
+    WC_GROUPS[g].forEach(function(t){ teams.push([t,"Group"]); });
+  });
+  sh.getRange(3,9,teams.length,2).setValues(teams);
+  sh.getRange(3,10,teams.length,1).setBackground(COLOR_INPUT);
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(WC_STAGE_LIST, true).setAllowInvalid(false).build();
+  sh.getRange(3,10,teams.length,1).setDataValidation(rule);
+
+  [40,60,55,150,90,90,150,20,150,160].forEach(function(w,c){ sh.setColumnWidth(c+1,w); });
+  sh.setFrozenRows(2);
+  ss.setActiveSheet(sh);
+
+  var ui = _ui();
+  if (ui) ui.alert("'Results' tab is ready.\n\nFill in the match scores (columns E/F) and set each team's furthest round (column J), then run Pool > Update Leaderboard.");
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  LEADERBOARD  —  computes and ranks every participant
+// ═════════════════════════════════════════════════════════════════════════════
+function updateLeaderboard() {
+  var ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var ui   = _ui();
+  var pred = ss.getSheetByName("Predicciones");
+  var res  = ss.getSheetByName("Results");
+
+  if (!pred || pred.getLastRow() < 2) { if (ui) ui.alert("No submissions yet in the 'Predicciones' tab."); return; }
+  if (!res) { if (ui) ui.alert("No 'Results' tab found.\n\nRun Pool > Setup / Reset Results Tab first."); return; }
+
+  // Actual group scores → { matchNum: {h, a} }
+  var gvals  = res.getRange(3,1,WC_FIXTURES.length,7).getValues();
+  var scores = {};
+  gvals.forEach(function(r){
+    var n = r[0], h = r[4], a = r[5];
+    if (h !== "" && a !== "" && !isNaN(Number(h)) && !isNaN(Number(a))) scores[n] = {h:Number(h), a:Number(a)};
+  });
+
+  // Actual team stages → { canonicalTeam: stageRank }
+  var tvals = res.getRange(3,9,48,2).getValues();
+  var stage = {};
+  tvals.forEach(function(r){ if (r[0]) { var c = _canon(r[0]); if (c) stage[c] = WC_STAGE[r[1]] || 0; } });
+
+  // Predictions
+  var data = pred.getDataRange().getValues();
+  var head = data[0], idx = {};
+  head.forEach(function(h,i){ idx[h] = i; });
+  function val(row, key){ return idx[key] == null ? "" : row[idx[key]]; }
+
+  var groupLetters = "ABCDEFGHIJKL".split("");
+  var out = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row  = data[i];
+    var name = ("" + val(row, "Name")).trim();
+    if (!name) continue;
+
+    // group-stage match points
+    var gp = 0;
+    for (var n = 1; n <= 72; n++) {
+      var sc = scores[n]; if (!sc) continue;
+      gp += _matchPts(val(row, "P"+n+"_H"), val(row, "P"+n+"_A"), sc.h, sc.a);
+    }
+
+    // advancement bonuses
+    var bp = 0;
+    var qual = [];
+    groupLetters.forEach(function(g){ qual.push(val(row,"G"+g+"_1")); qual.push(val(row,"G"+g+"_2")); });
+    bp += _tierPts(qual, stage, 1, 5);   // reaches Round of 32
+
+    var r16 = []; for (var k=1;k<=8;k++){ r16.push(val(row,"R16_"+k+"_A")); r16.push(val(row,"R16_"+k+"_B")); }
+    bp += _tierPts(r16, stage, 2, 10);
+
+    var qf = []; for (var k2=1;k2<=4;k2++){ qf.push(val(row,"QF_"+k2+"_A")); qf.push(val(row,"QF_"+k2+"_B")); }
+    bp += _tierPts(qf, stage, 3, 15);
+
+    var sf = []; for (var k3=1;k3<=2;k3++){ sf.push(val(row,"SF_"+k3+"_A")); sf.push(val(row,"SF_"+k3+"_B")); }
+    bp += _tierPts(sf, stage, 4, 20);
+
+    var fin = [val(row,"FIN_1_A"), val(row,"FIN_1_B")];
+    bp += _tierPts(fin, stage, 5, 25);
+
+    out.push([name, gp, bp, gp + bp]);
+  }
+
+  out.sort(function(a,b){ return b[3] - a[3]; });
+
+  // Write Leaderboard sheet
+  var lb = ss.getSheetByName("Leaderboard");
+  if (lb) ss.deleteSheet(lb);
+  lb = ss.insertSheet("Leaderboard", 0);
+
+  lb.getRange(1,1,1,5).merge()
+    .setValue("🏆 LEADERBOARD — World Cup 2026 Pool")
+    .setBackground(COLOR_HEADER).setFontColor("#ffffff")
+    .setFontSize(14).setFontWeight("bold").setHorizontalAlignment("center");
+  lb.setRowHeight(1, 38);
+  lb.getRange(2,1,1,5).setValues([["Pos","Participant","Group Pts","Bonus Pts","TOTAL"]])
+    .setBackground(COLOR_SUBHDR).setFontColor("#ffffff").setFontWeight("bold").setHorizontalAlignment("center");
+
+  if (out.length) {
+    var rows2 = out.map(function(r, i){
+      var pos = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+      return [pos, r[0], r[1], r[2], r[3]];
+    });
+    lb.getRange(3,1,rows2.length,5).setValues(rows2);
+    lb.getRange(3,5,rows2.length,1).setFontWeight("bold").setBackground("#d5e8d4");
+    lb.getRange(3,1,rows2.length,1).setHorizontalAlignment("center").setFontWeight("bold");
+  } else {
+    lb.getRange(3,1).setValue("No scored participants yet.").setFontStyle("italic").setFontColor("#999999");
+  }
+
+  [55,220,110,110,90].forEach(function(w,c){ lb.setColumnWidth(c+1,w); });
+  lb.setFrozenRows(2);
+  ss.setActiveSheet(lb);
+
+  if (ui) ui.alert("Leaderboard updated — " + out.length + " participant(s) ranked.");
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 //  CUSTOM MENU + UTILITIES
 // ═════════════════════════════════════════════════════════════════════════════
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("Pool")
-    .addItem("Agregar Participante", "addParticipant")
-    .addItem("Actualizar Tabla", "refreshLeaderboard")
+    .addItem("🔄 Update Leaderboard", "updateLeaderboard")
+    .addItem("🧱 Setup / Reset Results Tab", "setupResultsTab")
     .addSeparator()
-    .addItem("Ver Reglas", "showRules")
+    .addItem("📖 View Rules", "showRules")
     .addToUi();
 }
 
-function refreshLeaderboard() {
-  _updateLeaderboard(SpreadsheetApp.openById(SPREADSHEET_ID));
-  SpreadsheetApp.getUi().alert("Tabla actualizada!");
+function _ui() {
+  try { return SpreadsheetApp.getUi(); } catch (e) { return null; }
 }
 
 function showRules() {
-  SpreadsheetApp.getUi().alert(
-    "REGLAS — World Cup 2026 Pool  v" + VERSION + "\n\n" +
-    "FASE DE GRUPOS (72 partidos):\n" +
-    "  Resultado correcto (quien gana o empate): 2 puntos\n" +
-    "  Marcador exacto: +3 puntos adicionales\n" +
-    "  Maximo por partido: 5 puntos\n" +
-    "  Maximo fase de grupos: 360 puntos\n\n" +
-    "FASE ELIMINATORIA:\n" +
-    "  Ronda de 32: 2 pts por acierto\n" +
-    "  Octavos de Final: 4 pts por acierto\n" +
-    "  Cuartos de Final: 6 pts por acierto\n" +
-    "  Semifinales: 8 pts por acierto\n" +
-    "  Tercer lugar: 5 pts\n" +
-    "  Campeon: 15 pts\n\n" +
-    "Gana quien acumule mas puntos al final del torneo."
+  var ui = _ui(); if (!ui) return;
+  ui.alert(
+    "RULES — World Cup 2026 Pool  v" + VERSION + "\n\n" +
+    "PER MATCH (group stage):\n" +
+    "  Correct outcome or draw: 3 pts\n" +
+    "  Exact score: 5 pts\n\n" +
+    "ADVANCEMENT BONUSES (per correctly predicted team):\n" +
+    "  Reaches Round of 32 (advances from group): +5 pts\n" +
+    "  Reaches Round of 16: +10 pts\n" +
+    "  Reaches Quarterfinals: +15 pts\n" +
+    "  Reaches Semifinals: +20 pts\n" +
+    "  Reaches the Final: +25 pts\n\n" +
+    "Most points at the end of the tournament wins."
   );
 }
