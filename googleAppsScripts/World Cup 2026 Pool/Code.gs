@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.04g";
+var VERSION        = "01.05g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -371,13 +371,13 @@ function doPost(e) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-//  PUBLIC FORM SUBMISSIONS  —  each participant's picks land in "Predicciones"
+//  PUBLIC FORM SUBMISSIONS  —  each participant's picks land in "Predictions"
 // ═════════════════════════════════════════════════════════════════════════════
 function _saveSubmission(jsonStr) {
   try {
     var data  = JSON.parse(jsonStr);
     var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var sheet = ss.getSheetByName("Predicciones") || ss.insertSheet("Predicciones");
+    var sheet = ss.getSheetByName("Predictions") || ss.insertSheet("Predictions");
     var keys  = Object.keys(data);
 
     // First submission: write a header row (Timestamp + every payload key).
@@ -710,7 +710,7 @@ function _setupBracketSheet(sheet) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-//  LEADERBOARD SYSTEM  —  scores web-form submissions ("Predicciones")
+//  LEADERBOARD SYSTEM  —  scores web-form submissions ("Predictions")
 //  against the organizer-entered "Results" tab.
 //
 //  Scoring:
@@ -886,10 +886,10 @@ function setupResultsTab() {
 function updateLeaderboard() {
   var ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
   var ui   = _ui();
-  var pred = ss.getSheetByName("Predicciones");
+  var pred = ss.getSheetByName("Predictions");
   var res  = ss.getSheetByName("Results");
 
-  if (!pred || pred.getLastRow() < 2) { if (ui) ui.alert("No submissions yet in the 'Predicciones' tab."); return; }
+  if (!pred || pred.getLastRow() < 2) { if (ui) ui.alert("No submissions yet in the 'Predictions' tab."); return; }
   if (!res) { if (ui) ui.alert("No 'Results' tab found.\n\nRun Pool > Setup / Reset Results Tab first."); return; }
 
   // Actual group scores → { matchNum: {h, a} }
