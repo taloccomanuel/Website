@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.06g";
+var VERSION        = "01.07g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -375,19 +375,25 @@ function doPost(e) {
 //  Group-match score columns get the country appended (e.g. "P1_H-Mexico").
 //  The raw data-key always stays as the prefix so scoring can recover it.
 // ═════════════════════════════════════════════════════════════════════════════
-// payload-key → country (home/away team of each group fixture)
-var _WC_TEAM_BY_KEY = (function() {
-  var m = {};
-  WC_FIXTURES.forEach(function(f) {
-    m["P" + f[0] + "_H"] = f[4];
-    m["P" + f[0] + "_A"] = f[5];
-  });
-  return m;
-})();
+// payload-key → country (home/away team of each group fixture).
+// Built lazily because WC_FIXTURES is declared later in the file — a top-level
+// IIFE here would run before WC_FIXTURES is assigned (still undefined).
+var _WC_TEAM_BY_KEY = null;
+function _wcTeamByKey() {
+  if (!_WC_TEAM_BY_KEY) {
+    _WC_TEAM_BY_KEY = {};
+    WC_FIXTURES.forEach(function(f) {
+      _WC_TEAM_BY_KEY["P" + f[0] + "_H"] = f[4];
+      _WC_TEAM_BY_KEY["P" + f[0] + "_A"] = f[5];
+    });
+  }
+  return _WC_TEAM_BY_KEY;
+}
 
 // "P1_H" → "P1_H-Mexico"  (keys with no known country pass through unchanged)
 function _friendlyHeader(key) {
-  return _WC_TEAM_BY_KEY[key] ? (key + "-" + _WC_TEAM_BY_KEY[key]) : key;
+  var m = _wcTeamByKey();
+  return m[key] ? (key + "-" + m[key]) : key;
 }
 
 // "P1_H-Mexico" → "P1_H"  (raw keys never contain "-", so split on the first one)
