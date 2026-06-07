@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiniela Mundial 2026</title>
+<style>
+  :root{
+    --blue:#003DA5; --blue2:#0a52c9; --red:#c8102e; --gold:#d4af37;
+    --ink:#1a2330; --muted:#6b7785; --line:#e2e6ec; --bg:#eef1f5;
+    --input:#fffdf2; --ok:#1e8e3e;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg); color:var(--ink); line-height:1.4; padding-bottom:90px;}
+  .wrap{max-width:760px; margin:0 auto; padding:0 12px;}
+
+  header{background:linear-gradient(135deg,var(--blue),var(--blue2)); color:#fff;
+         text-align:center; padding:22px 14px 18px; border-bottom:5px solid var(--gold);}
+  header h1{font-size:22px; letter-spacing:.5px; line-height:1.15;}
+  header .sub{font-size:13px; opacity:.92; margin-top:5px;}
+  header .flag{font-size:24px; letter-spacing:3px; margin-bottom:6px;}
+
+  .card{background:#fff; border:1px solid var(--line); border-radius:12px;
+        margin:14px 0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .card h2{background:var(--blue); color:#fff; font-size:15px; padding:11px 14px;
+           display:flex; align-items:center; gap:8px;}
+  .card .body{padding:14px;}
+
+  label.fld{display:block; font-size:12px; font-weight:600; color:var(--muted);
+            margin:10px 0 4px; text-transform:uppercase; letter-spacing:.4px;}
+  input[type=text], input[type=email], input[type=tel], select{
+    width:100%; padding:11px 12px; font-size:16px; border:1px solid #c4ccd6;
+    border-radius:8px; background:#fff; color:var(--ink);}
+  input:focus, select:focus{outline:none; border-color:var(--blue2); box-shadow:0 0 0 3px rgba(10,82,201,.12);}
+
+  /* scoring legend */
+  .legend{display:grid; grid-template-columns:1fr; gap:8px;}
+  .lg{display:flex; align-items:center; gap:10px; font-size:13.5px; padding:9px 11px;
+      background:#f7f9fc; border:1px solid var(--line); border-radius:8px;}
+  .lg .pts{margin-left:auto; font-weight:800; color:var(--blue); white-space:nowrap;}
+  .lg .ic{font-size:18px;}
+
+  /* group block */
+  .grp-letter{display:inline-flex; align-items:center; justify-content:center;
+              width:26px; height:26px; border-radius:6px; background:var(--gold);
+              color:#1a2330; font-weight:800; font-size:15px;}
+  .match{display:flex; align-items:center; gap:6px; padding:9px 0; border-bottom:1px dashed var(--line);}
+  .match:last-of-type{border-bottom:none;}
+  .match .t{flex:1 1 0; min-width:0; font-size:14px; font-weight:600; display:flex; align-items:center; gap:5px;}
+  .match .t.home{justify-content:flex-end; text-align:right;}
+  .match .t.away{justify-content:flex-start; text-align:left;}
+  .match .t .fl{font-size:16px;}
+  .score{width:42px; flex:0 0 42px; text-align:center; padding:9px 2px; font-size:17px;
+         font-weight:700; background:var(--input); border:1px solid #d8c98a;}
+  .dash{flex:0 0 auto; color:var(--muted); font-weight:700;}
+  .md-tag{font-size:10px; color:var(--muted); text-align:center; margin:6px 0 2px;
+          text-transform:uppercase; letter-spacing:.5px; font-weight:700;}
+
+  .qualifiers{margin-top:12px; padding-top:12px; border-top:2px solid var(--gold);
+              background:#fffdf3; margin:12px -14px -14px; padding:12px 14px;}
+  .qualifiers .qt{font-size:12px; font-weight:700; color:var(--red); margin-bottom:8px;
+                  text-transform:uppercase; letter-spacing:.3px;}
+  .qrow{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .qrow label{font-size:11px; font-weight:700; color:var(--muted); display:block; margin-bottom:3px;}
+
+  /* knockout */
+  .ko-note{font-size:12.5px; color:var(--muted); padding:10px 14px; background:#f7f9fc;
+           border-bottom:1px solid var(--line);}
+  .ko-round{padding:12px 14px; border-bottom:1px solid var(--line);}
+  .ko-round:last-child{border-bottom:none;}
+  .ko-round h3{font-size:13px; color:var(--blue); margin-bottom:2px; display:flex; align-items:center; gap:8px;}
+  .ko-round .bonus{margin-left:auto; font-size:11px; font-weight:800; color:#fff;
+                   background:var(--red); padding:2px 8px; border-radius:20px;}
+  .ko-round.final h3{color:var(--gold);}
+  .ko-match{display:flex; align-items:center; gap:6px; margin-top:9px;}
+  .ko-match .tn{flex:1 1 0; min-width:0;}
+  .ko-match .tn input{padding:9px 10px; font-size:14px;}
+  .ko-match .sc{width:40px; flex:0 0 40px;}
+  .ko-num{flex:0 0 30px; font-size:10px; color:var(--muted); font-weight:700; text-align:center;}
+  .champ{background:linear-gradient(135deg,#fff8e1,#fff); border:2px solid var(--gold);
+         border-radius:10px; padding:14px; margin-top:6px; text-align:center;}
+  .champ label{font-size:13px; font-weight:800; color:var(--red); display:block; margin-bottom:8px;
+               text-transform:uppercase; letter-spacing:.5px;}
+
+  /* submit bar */
+  .subbar{position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line);
+          padding:12px; box-shadow:0 -3px 12px rgba(0,0,0,.08); z-index:50;}
+  .subbar .wrap{display:flex; gap:10px; align-items:center;}
+  #progress{font-size:12px; color:var(--muted); flex:1 1 auto;}
+  #progress b{color:var(--blue);}
+  button.submit{flex:0 0 auto; background:linear-gradient(135deg,var(--gold),#b8941f); color:#1a2330;
+                font-weight:800; font-size:15px; border:none; border-radius:10px; padding:13px 22px;
+                letter-spacing:.4px; cursor:pointer;}
+  button.submit:disabled{opacity:.55;}
+
+  /* overlay */
+  .overlay{position:fixed; inset:0; background:rgba(10,20,40,.72); display:none;
+           align-items:center; justify-content:center; z-index:100; padding:24px;}
+  .overlay.show{display:flex;}
+  .modal{background:#fff; border-radius:16px; max-width:380px; width:100%; padding:26px 22px; text-align:center;}
+  .modal .big{font-size:46px; margin-bottom:8px;}
+  .modal h3{font-size:20px; margin-bottom:8px;}
+  .modal p{font-size:14px; color:var(--muted); margin-bottom:6px;}
+  .modal button{margin-top:14px; background:var(--blue); color:#fff; border:none; border-radius:9px;
+                padding:11px 20px; font-size:14px; font-weight:700; cursor:pointer;}
+  .spinner{width:42px; height:42px; border:4px solid var(--line); border-top-color:var(--blue);
+           border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .err{color:var(--red); font-size:13px; margin-top:8px; display:none;}
+  .footnote{text-align:center; font-size:11px; color:var(--muted); padding:6px 0 14px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="flag">🇨🇦 🇲🇽 🇺🇸</div>
+  <h1>QUINIELA MUNDIAL 2026</h1>
+  <div class="sub">Predice todos los partidos · Llena el cuadro completo · Gana la quiniela</div>
+</header>
+
+<div class="wrap">
+
+  <!-- Participant info -->
+  <div class="card">
+    <h2>👤 Tus Datos</h2>
+    <div class="body">
+      <label class="fld">Nombre completo *</label>
+      <input type="text" data-key="Nombre" id="f_name" placeholder="Tu nombre y apellido" />
+      <label class="fld">Correo electrónico</label>
+      <input type="email" data-key="Correo" placeholder="opcional" />
+      <label class="fld">Teléfono / WhatsApp</label>
+      <input type="tel" data-key="Telefono" placeholder="opcional" />
+    </div>
+  </div>
+
+  <!-- Scoring -->
+  <div class="card">
+    <h2>🏅 Cómo se Puntúa</h2>
+    <div class="body legend">
+      <div class="lg"><span class="ic">✅</span><span>Acertar el ganador <em>o</em> el empate de un partido</span><span class="pts">3 pts</span></div>
+      <div class="lg"><span class="ic">🎯</span><span>Acertar el marcador exacto del partido</span><span class="pts">5 pts</span></div>
+      <div class="lg"><span class="ic">🟢</span><span>Cada equipo que aciertes que pasa a 16avos (de grupo)</span><span class="pts">+5 pts</span></div>
+      <div class="lg"><span class="ic">🔵</span><span>Cada equipo que aciertes que llega a Octavos</span><span class="pts">+10 pts</span></div>
+      <div class="lg"><span class="ic">🟣</span><span>Cada equipo que aciertes que llega a Cuartos</span><span class="pts">+15 pts</span></div>
+      <div class="lg"><span class="ic">🔴</span><span>Cada equipo que aciertes que llega a Semifinal</span><span class="pts">+20 pts</span></div>
+      <div class="lg"><span class="ic">🏆</span><span>Cada equipo que aciertes que llega a la Final</span><span class="pts">+25 pts</span></div>
+    </div>
+  </div>
+
+  <!-- Group stage -->
+  <div id="groups"></div>
+
+  <!-- Knockout -->
+  <div class="card">
+    <h2>🏆 Fase Eliminatoria</h2>
+    <div class="ko-note">Escribe el equipo que predices en cada llave, desde 16avos hasta la Final. Predícelo todo desde ahora — los equipos que pongas en cada ronda valen puntos extra si aciertas.</div>
+    <div id="knockout"></div>
+    <div style="padding:14px;">
+      <div class="champ">
+        <label>🏆 Mi Campeón del Mundo 2026</label>
+        <input type="text" data-key="CAMPEON" placeholder="Escribe tu campeón" />
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">FIFA World Cup 2026™ · 11 jun – 19 jul · Quiniela no oficial</div>
+</div>
+
+<!-- Submit bar -->
+<div class="subbar">
+  <div class="wrap">
+    <div id="progress">Partidos llenados: <b id="filled">0</b> / 72</div>
+    <button class="submit" id="submitBtn" type="button">ENVIAR ▸</button>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- Hidden submit target (avoids any CORS issues with Apps Script) -->
+<form id="poolForm" method="POST"
+      action="https://script.google.com/macros/s/AKfycbw3y-qIJwrNNSFmReBQqd5C4ifjMPoY9tMjJkexXwoMNfhQetTprGL5jz_3dqCqSt1v/exec"
+      target="hiddenFrame" style="display:none;">
+  <textarea name="payload" id="payload"></textarea>
+</form>
+<iframe name="hiddenFrame" id="hiddenFrame" style="display:none;"></iframe>
+
+<script>
+// ─── Teams (with flag emoji) ───────────────────────────────────────────────
+var FL = {
+  "Mexico":"🇲🇽","South Africa":"🇿🇦","South Korea":"🇰🇷","Czechia":"🇨🇿",
+  "Canada":"🇨🇦","Bosnia-Herzegovina":"🇧🇦","Qatar":"🇶🇦","Switzerland":"🇨🇭",
+  "Brazil":"🇧🇷","Morocco":"🇲🇦","Haiti":"🇭🇹","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "USA":"🇺🇸","Paraguay":"🇵🇾","Australia":"🇦🇺","Türkiye":"🇹🇷",
+  "Germany":"🇩🇪","Curaçao":"🇨🇼","Ivory Coast":"🇨🇮","Ecuador":"🇪🇨",
+  "Netherlands":"🇳🇱","Japan":"🇯🇵","Sweden":"🇸🇪","Tunisia":"🇹🇳",
+  "Belgium":"🇧🇪","Egypt":"🇪🇬","Iran":"🇮🇷","New Zealand":"🇳🇿",
+  "Spain":"🇪🇸","Cape Verde":"🇨🇻","Saudi Arabia":"🇸🇦","Uruguay":"🇺🇾",
+  "France":"🇫🇷","Senegal":"🇸🇳","Iraq":"🇮🇶","Norway":"🇳🇴",
+  "Argentina":"🇦🇷","Algeria":"🇩🇿","Austria":"🇦🇹","Jordan":"🇯🇴",
+  "Portugal":"🇵🇹","DR Congo":"🇨🇩","Uzbekistan":"🇺🇿","Colombia":"🇨🇴",
+  "England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatia":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦"
+};
+function fl(t){ return FL[t] || "⚽"; }
+
+var GROUPS = {
+  "A":["Mexico","South Africa","South Korea","Czechia"],
+  "B":["Canada","Bosnia-Herzegovina","Qatar","Switzerland"],
+  "C":["Brazil","Morocco","Haiti","Scotland"],
+  "D":["USA","Paraguay","Australia","Türkiye"],
+  "E":["Germany","Curaçao","Ivory Coast","Ecuador"],
+  "F":["Netherlands","Japan","Sweden","Tunisia"],
+  "G":["Belgium","Egypt","Iran","New Zealand"],
+  "H":["Spain","Cape Verde","Saudi Arabia","Uruguay"],
+  "I":["France","Senegal","Iraq","Norway"],
+  "J":["Argentina","Algeria","Austria","Jordan"],
+  "K":["Portugal","DR Congo","Uzbekistan","Colombia"],
+  "L":["England","Croatia","Ghana","Panama"]
+};
+
+// [match#, date, group, matchday, home, away]
+var FIXTURES = [
+  [1,"11 Jun","A",1,"Mexico","South Africa"],[2,"11 Jun","A",1,"South Korea","Czechia"],
+  [3,"18 Jun","A",2,"Czechia","South Africa"],[4,"18 Jun","A",2,"Mexico","South Korea"],
+  [5,"24 Jun","A",3,"Mexico","Czechia"],[6,"24 Jun","A",3,"South Korea","South Africa"],
+  [7,"12 Jun","B",1,"Canada","Bosnia-Herzegovina"],[8,"13 Jun","B",1,"Qatar","Switzerland"],
+  [9,"18 Jun","B",2,"Switzerland","Bosnia-Herzegovina"],[10,"18 Jun","B",2,"Canada","Qatar"],
+  [11,"24 Jun","B",3,"Switzerland","Canada"],[12,"24 Jun","B",3,"Bosnia-Herzegovina","Qatar"],
+  [13,"13 Jun","C",1,"Brazil","Morocco"],[14,"13 Jun","C",1,"Haiti","Scotland"],
+  [15,"19 Jun","C",2,"Scotland","Morocco"],[16,"19 Jun","C",2,"Brazil","Haiti"],
+  [17,"24 Jun","C",3,"Brazil","Scotland"],[18,"24 Jun","C",3,"Morocco","Haiti"],
+  [19,"12 Jun","D",1,"USA","Paraguay"],[20,"13 Jun","D",1,"Australia","Türkiye"],
+  [21,"19 Jun","D",2,"USA","Australia"],[22,"19 Jun","D",2,"Türkiye","Paraguay"],
+  [23,"25 Jun","D",3,"USA","Türkiye"],[24,"25 Jun","D",3,"Paraguay","Australia"],
+  [25,"14 Jun","E",1,"Germany","Curaçao"],[26,"14 Jun","E",1,"Ivory Coast","Ecuador"],
+  [27,"20 Jun","E",2,"Germany","Ivory Coast"],[28,"20 Jun","E",2,"Ecuador","Curaçao"],
+  [29,"25 Jun","E",3,"Ecuador","Germany"],[30,"25 Jun","E",3,"Curaçao","Ivory Coast"],
+  [31,"14 Jun","F",1,"Netherlands","Japan"],[32,"14 Jun","F",1,"Tunisia","Sweden"],
+  [33,"20 Jun","F",2,"Netherlands","Sweden"],[34,"20 Jun","F",2,"Tunisia","Japan"],
+  [35,"25 Jun","F",3,"Tunisia","Netherlands"],[36,"25 Jun","F",3,"Japan","Sweden"],
+  [37,"15 Jun","G",1,"Belgium","Egypt"],[38,"15 Jun","G",1,"Iran","New Zealand"],
+  [39,"21 Jun","G",2,"Belgium","Iran"],[40,"21 Jun","G",2,"New Zealand","Egypt"],
+  [41,"26 Jun","G",3,"New Zealand","Belgium"],[42,"26 Jun","G",3,"Egypt","Iran"],
+  [43,"15 Jun","H",1,"Spain","Cape Verde"],[44,"15 Jun","H",1,"Saudi Arabia","Uruguay"],
+  [45,"21 Jun","H",2,"Spain","Saudi Arabia"],[46,"21 Jun","H",2,"Uruguay","Cape Verde"],
+  [47,"26 Jun","H",3,"Uruguay","Spain"],[48,"26 Jun","H",3,"Cape Verde","Saudi Arabia"],
+  [49,"16 Jun","I",1,"France","Senegal"],[50,"16 Jun","I",1,"Iraq","Norway"],
+  [51,"22 Jun","I",2,"France","Iraq"],[52,"22 Jun","I",2,"Norway","Senegal"],
+  [53,"26 Jun","I",3,"Norway","France"],[54,"26 Jun","I",3,"Senegal","Iraq"],
+  [55,"16 Jun","J",1,"Argentina","Algeria"],[56,"16 Jun","J",1,"Austria","Jordan"],
+  [57,"22 Jun","J",2,"Argentina","Austria"],[58,"22 Jun","J",2,"Jordan","Algeria"],
+  [59,"27 Jun","J",3,"Algeria","Austria"],[60,"27 Jun","J",3,"Jordan","Argentina"],
+  [61,"17 Jun","K",1,"Portugal","DR Congo"],[62,"17 Jun","K",1,"Uzbekistan","Colombia"],
+  [63,"23 Jun","K",2,"Portugal","Uzbekistan"],[64,"23 Jun","K",2,"Colombia","DR Congo"],
+  [65,"27 Jun","K",3,"Colombia","Portugal"],[66,"27 Jun","K",3,"DR Congo","Uzbekistan"],
+  [67,"17 Jun","L",1,"England","Croatia"],[68,"17 Jun","L",1,"Ghana","Panama"],
+  [69,"23 Jun","L",2,"England","Ghana"],[70,"23 Jun","L",2,"Panama","Croatia"],
+  [71,"27 Jun","L",3,"Panama","England"],[72,"27 Jun","L",3,"Croatia","Ghana"]
+];
+
+var GROUP_COLORS = {A:"#003DA5",B:"#0a7e3f",C:"#c8102e",D:"#7b1fa2",E:"#00838f",
+  F:"#e65100",G:"#283593",H:"#5d4037",I:"#ad1457",J:"#2e7d32",K:"#9e6f00",L:"#1565c0"};
+
+// ─── Build group stage ──────────────────────────────────────────────────────
+var groupsEl = document.getElementById("groups");
+Object.keys(GROUPS).forEach(function(g){
+  var matches = FIXTURES.filter(function(f){ return f[2]===g; });
+  var card = document.createElement("div");
+  card.className = "card";
+  var teamsLine = GROUPS[g].map(function(t){ return fl(t)+" "+t; }).join("  ·  ");
+  var h = '<h2><span class="grp-letter" style="background:'+GROUP_COLORS[g]+';color:#fff">'+g+'</span> Grupo '+g+'</h2>';
+  h += '<div class="body"><div style="font-size:12px;color:var(--muted);margin-bottom:6px">'+teamsLine+'</div>';
+  var lastMd = 0;
+  matches.forEach(function(m){
+    if (m[3] !== lastMd){ h += '<div class="md-tag">Jornada '+m[3]+'</div>'; lastMd = m[3]; }
+    h += '<div class="match">'
+      + '<span class="t home">'+m[4]+' <span class="fl">'+fl(m[4])+'</span></span>'
+      + '<input class="score gscore" inputmode="numeric" maxlength="2" data-key="P'+m[0]+'_L" />'
+      + '<span class="dash">–</span>'
+      + '<input class="score gscore" inputmode="numeric" maxlength="2" data-key="P'+m[0]+'_V" />'
+      + '<span class="t away"><span class="fl">'+fl(m[5])+'</span> '+m[5]+'</span>'
+      + '</div>';
+  });
+  // qualifier picks
+  var opts = '<option value="">— elige —</option>' + GROUPS[g].map(function(t){
+    return '<option value="'+t+'">'+t+'</option>'; }).join("");
+  h += '<div class="qualifiers"><div class="qt">¿Quién clasifica de este grupo? (+5 pts por equipo)</div>'
+     + '<div class="qrow">'
+     + '<div><label>🥇 1° Lugar</label><select data-key="G'+g+'_1">'+opts+'</select></div>'
+     + '<div><label>🥈 2° Lugar</label><select data-key="G'+g+'_2">'+opts+'</select></div>'
+     + '</div></div>';
+  h += '</div>';
+  card.innerHTML = h;
+  groupsEl.appendChild(card);
+});
+
+// ─── Build knockout ─────────────────────────────────────────────────────────
+var KO_ROUNDS = [
+  {key:"R32", name:"16avos de Final", count:16, bonus:"+5 pts/equipo", cls:""},
+  {key:"R16", name:"Octavos de Final", count:8,  bonus:"+10 pts/equipo", cls:""},
+  {key:"QF",  name:"Cuartos de Final", count:4,  bonus:"+15 pts/equipo", cls:""},
+  {key:"SF",  name:"Semifinales",      count:2,  bonus:"+20 pts/equipo", cls:""},
+  {key:"3RD", name:"Tercer Lugar",     count:1,  bonus:"3/5 pts",        cls:""},
+  {key:"FIN", name:"FINAL",            count:1,  bonus:"+25 pts/equipo", cls:"final"}
+];
+var koEl = document.getElementById("knockout");
+KO_ROUNDS.forEach(function(r){
+  var div = document.createElement("div");
+  div.className = "ko-round " + r.cls;
+  var h = '<h3>'+(r.cls==="final"?"🏆 ":"")+r.name+'<span class="bonus">'+r.bonus+'</span></h3>';
+  for (var i=1;i<=r.count;i++){
+    h += '<div class="ko-match">'
+      + '<span class="ko-num">'+i+'</span>'
+      + '<span class="tn"><input type="text" data-key="'+r.key+'_'+i+'_A" placeholder="Equipo" /></span>'
+      + '<input class="score sc" inputmode="numeric" maxlength="2" data-key="'+r.key+'_'+i+'_SA" />'
+      + '<span class="dash">–</span>'
+      + '<input class="score sc" inputmode="numeric" maxlength="2" data-key="'+r.key+'_'+i+'_SB" />'
+      + '<span class="tn"><input type="text" data-key="'+r.key+'_'+i+'_B" placeholder="Equipo" /></span>'
+      + '</div>';
+  }
+  div.innerHTML = h;
+  koEl.appendChild(div);
+});
+
+// ─── Progress counter (group matches filled) ────────────────────────────────
+var filledEl = document.getElementById("filled");
+function updateProgress(){
+  var n = 0;
+  for (var i=1;i<=72;i++){
+    var a = document.querySelector('[data-key="P'+i+'_L"]');
+    var b = document.querySelector('[data-key="P'+i+'_V"]');
+    if (a && b && a.value !== "" && b.value !== "") n++;
+  }
+  filledEl.textContent = n;
+}
+document.addEventListener("input", function(e){
+  if (e.target.classList.contains("gscore")) updateProgress();
+});
+
+// ─── Submit ─────────────────────────────────────────────────────────────────
+var submitting = false;
+function showModal(html){ document.getElementById("modal").innerHTML = html; document.getElementById("overlay").classList.add("show"); }
+function hideModal(){ document.getElementById("overlay").classList.remove("show"); }
+
+document.getElementById("submitBtn").addEventListener("click", function(){
+  var name = document.getElementById("f_name").value.trim();
+  if (!name){
+    showModal('<div class="big">✋</div><h3>Falta tu nombre</h3><p>Por favor escribe tu nombre completo arriba antes de enviar.</p><button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Entendido</button>');
+    return;
+  }
+  if (submitting) return;
+  submitting = true;
+
+  var data = {};
+  document.querySelectorAll("[data-key]").forEach(function(el){
+    data[el.getAttribute("data-key")] = el.value.trim();
+  });
+
+  document.getElementById("payload").value = JSON.stringify(data);
+  showModal('<div class="spinner"></div><h3>Enviando…</h3><p>Guardando tus predicciones</p>');
+
+  // The hidden iframe loads the Apps Script response; that's our success signal.
+  var frame = document.getElementById("hiddenFrame");
+  var done = false;
+  frame.onload = function(){
+    if (done) return; done = true;
+    showModal('<div class="big">✅</div><h3>¡Listo, '+name.split(" ")[0]+'!</h3>'
+      + '<p>Tus predicciones se enviaron correctamente al organizador.</p>'
+      + '<p style="margin-top:8px;font-size:12px">Toma una captura de pantalla como respaldo. ¡Mucha suerte! 🍀</p>'
+      + '<button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Cerrar</button>');
+  };
+  // safety timeout in case onload is slow
+  setTimeout(function(){
+    if (done) return; done = true;
+    showModal('<div class="big">✅</div><h3>¡Enviado!</h3><p>Si no estás seguro, toma una captura y avisa al organizador.</p><button onclick="document.getElementById(\'overlay\').classList.remove(\'show\')">Cerrar</button>');
+  }, 6000);
+
+  document.getElementById("poolForm").submit();
+  setTimeout(function(){ submitting = false; }, 8000);
+});
+</script>
+</body>
+</html>

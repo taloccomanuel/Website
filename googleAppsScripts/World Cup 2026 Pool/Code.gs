@@ -1,5 +1,5 @@
 // ─── PROJECT CONFIG ──────────────────────────────────────────────────────────
-var VERSION        = "01.01g";
+var VERSION        = "01.02g";
 var GITHUB_OWNER   = "taloccomanuel";
 var GITHUB_REPO    = "Website";
 var GITHUB_BRANCH  = "main";
@@ -123,7 +123,60 @@ function doPost(e) {
   if (action === "deploy") {
     return ContentService.createTextOutput(pullAndDeployFromGitHub());
   }
+
+  // Bracket submission from the public web form (world-cup-pool.html).
+  // The form posts a single "payload" field (JSON) to a hidden iframe.
+  if (e && e.parameter && e.parameter.payload) {
+    return _saveSubmission(e.parameter.payload);
+  }
+  if (e && e.postData && e.postData.contents) {
+    return _saveSubmission(e.postData.contents);
+  }
+
   return ContentService.createTextOutput("ok");
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  PUBLIC FORM SUBMISSIONS  —  each participant's picks land in "Predicciones"
+// ═════════════════════════════════════════════════════════════════════════════
+function _saveSubmission(jsonStr) {
+  try {
+    var data  = JSON.parse(jsonStr);
+    var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName("Predicciones") || ss.insertSheet("Predicciones");
+    var keys  = Object.keys(data);
+
+    // First submission: write a header row (Timestamp + every payload key).
+    if (sheet.getLastRow() === 0) {
+      var headers = ["Timestamp"].concat(keys);
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers])
+        .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold");
+      sheet.setFrozenRows(1);
+      sheet.setFrozenColumns(2);
+    }
+
+    // Reconcile against existing headers; append any new keys as new columns.
+    var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    keys.forEach(function(k) {
+      if (existing.indexOf(k) === -1) {
+        existing.push(k);
+        sheet.getRange(1, existing.length).setValue(k)
+          .setBackground(COLOR_HEADER).setFontColor("#ffffff").setFontWeight("bold");
+      }
+    });
+
+    var row = existing.map(function(h) {
+      if (h === "Timestamp") return new Date();
+      return data.hasOwnProperty(h) ? data[h] : "";
+    });
+    sheet.appendRow(row);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
 function pullAndDeployFromGitHub() {
