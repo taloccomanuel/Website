@@ -1,4 +1,4 @@
-var VERSION       = "01.43g";
+var VERSION       = "01.44g";
 var TITLE         = "Toolbox Talk Sign-In";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -604,7 +604,7 @@ function getHtml() {
           </div>
         </div>
         <div class="static-quiz-q">
-          <label class="static-quiz-q-label" for="static-quiz-q2-${i}"><span class="static-quiz-q-num">2</span>What hazards do you see in the image?</label>
+          <label class="static-quiz-q-label" for="static-quiz-q2-${i}"><span class="static-quiz-q-num">2</span>Can you identify all hazards in the images?</label>
           <textarea class="quiz-obs static-quiz-textarea" id="static-quiz-q2-${i}" data-img="${i+1}" data-q="2" placeholder="Your answer&hellip;"></textarea>
         </div>
       </div>`; }).join('')}
