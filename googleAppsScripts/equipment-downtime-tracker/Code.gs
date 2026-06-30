@@ -16,7 +16,7 @@
 //  workflow's doPost(action=deploy) webhook.
 // ════════════════════════════════════════════════════════════════════════
 
-var VERSION       = "01.00g";
+var VERSION       = "01.01g";
 var TITLE         = "Equipment Downtime Tracker";
 var GITHUB_OWNER  = "taloccomanuel";
 var GITHUB_REPO   = "Website";
@@ -36,17 +36,16 @@ var NOTIFY_EMAIL_TO = "taloccomanuel@gmail.com";
 // the remaining columns match the requested headings. "Logged At" is appended.
 var HEADERS = [
   "ID",
-  "Date of Initial Downtime",
-  "Time of Initial Downtime",
-  "Staff Member Reporting",
-  "Person Notified",
-  "Equipment Item Affected",
-  "Equipment Item Issue",
-  "Impact on Operations",
-  "Date New Item Ordered",
-  "Date New Item Received at Clinic",
-  "Date New Item Replaced & In Use",
-  "Resolved",
+  "Date of Initial Downtime Occurrence",
+  "Time of Initial Downtime Occurrence",
+  "Staff Member Reporting Occurrence",
+  "Person Notified of Occurrence",
+  "Equipment/Item Affected",
+  "Equipment/Item Issue",
+  "Impact On Operations",
+  "Date New Equipment/Item Ordered (if any)",
+  "Date New Equipment/Item Received at Clinic",
+  "Date New Equipment/Item Replaced and In Use (Issue Resolved)",
   "Additional Comments",
   "Logged At"
 ];
@@ -149,6 +148,10 @@ function getSheet_() {
 
 // Map a sheet row (array) to a record object the client understands.
 function rowToRecord_(row) {
+  // An occurrence is "resolved" once the replacement is in use — i.e. once the
+  // "Replaced and In Use (Issue Resolved)" date is filled in. There is no
+  // separate Resolved column; the status is derived from that date.
+  var dateReplaced = fmtVal_(row[10]);
   return {
     id:                 row[0]  || "",
     dateOccurred:       fmtVal_(row[1]),
@@ -160,10 +163,10 @@ function rowToRecord_(row) {
     impact:             row[7]  || "",
     dateOrdered:        fmtVal_(row[8]),
     dateReceived:       fmtVal_(row[9]),
-    dateReplaced:       fmtVal_(row[10]),
-    resolved:           String(row[11] || "").toLowerCase().indexOf("yes") === 0,
-    comments:           row[12] || "",
-    loggedAt:           fmtVal_(row[13])
+    dateReplaced:       dateReplaced,
+    resolved:           !!dateReplaced,
+    comments:           row[11] || "",
+    loggedAt:           fmtVal_(row[12])
   };
 }
 
@@ -206,7 +209,6 @@ function logDowntime(entry) {
     entry.dateOrdered       || "",
     entry.dateReceived      || "",
     entry.dateReplaced      || "",
-    entry.resolved ? "Yes" : "No",
     entry.comments          || "",
     loggedAt
   ]);
@@ -229,12 +231,11 @@ function updateDowntime(id, fields) {
   for (var i = 0; i < ids.length; i++) {
     if (String(ids[i][0]) === String(id)) {
       var rowNum = i + 2;
-      // Columns 9-13: Ordered, Received, Replaced, Resolved, Comments
+      // Columns 9-12: Ordered, Received, Replaced & In Use (Issue Resolved), Comments
       sheet.getRange(rowNum, 9,  1, 1).setValue(fields.dateOrdered  || "");
       sheet.getRange(rowNum, 10, 1, 1).setValue(fields.dateReceived || "");
       sheet.getRange(rowNum, 11, 1, 1).setValue(fields.dateReplaced || "");
-      sheet.getRange(rowNum, 12, 1, 1).setValue(fields.resolved ? "Yes" : "No");
-      sheet.getRange(rowNum, 13, 1, 1).setValue(fields.comments     || "");
+      sheet.getRange(rowNum, 12, 1, 1).setValue(fields.comments     || "");
       return { success: true };
     }
   }
@@ -424,15 +425,15 @@ function getHtml() {
     <form id="downtime-form" onsubmit="return false;">
       <div class="form-grid">
         <div class="field">
-          <label class="field-label" for="f-date">Date of Initial Downtime <span class="req">*</span></label>
+          <label class="field-label" for="f-date">Date of Initial Downtime Occurrence <span class="req">*</span></label>
           <input type="date" id="f-date" required />
         </div>
         <div class="field">
-          <label class="field-label" for="f-time">Time of Initial Downtime <span class="req">*</span></label>
+          <label class="field-label" for="f-time">Time of Initial Downtime Occurrence <span class="req">*</span></label>
           <input type="time" id="f-time" required />
         </div>
         <div class="field">
-          <label class="field-label" for="f-staff">Staff Member Reporting <span class="req">*</span></label>
+          <label class="field-label" for="f-staff">Staff Member Reporting Occurrence <span class="req">*</span></label>
           <input type="text" id="f-staff" placeholder="Name of reporter" />
         </div>
         <div class="field">
@@ -440,41 +441,40 @@ function getHtml() {
           <input type="text" id="f-notified" placeholder="Who was notified" />
         </div>
         <div class="field">
-          <label class="field-label" for="f-equipment">Equipment Item Affected <span class="req">*</span></label>
+          <label class="field-label" for="f-equipment">Equipment/Item Affected <span class="req">*</span></label>
           <input type="text" id="f-equipment" placeholder="e.g. Centrifuge #2" />
         </div>
         <div class="field">
-          <label class="field-label" for="f-issue">Equipment Item Issue <span class="req">*</span></label>
+          <label class="field-label" for="f-issue">Equipment/Item Issue <span class="req">*</span></label>
           <input type="text" id="f-issue" placeholder="What went wrong" />
         </div>
         <div class="field full">
-          <label class="field-label" for="f-impact">Impact on Operations</label>
+          <label class="field-label" for="f-impact">Impact On Operations</label>
           <textarea id="f-impact" placeholder="How did this affect clinic operations?"></textarea>
         </div>
       </div>
 
       <details class="followup">
-        <summary>Resolution / replacement details (optional — can be added later)</summary>
+        <summary>Replacement &amp; resolution details (optional — can be added later)</summary>
         <div class="followup-body">
           <div class="form-grid">
             <div class="field">
-              <label class="field-label" for="f-ordered">Date New Item Ordered</label>
+              <label class="field-label" for="f-ordered">Date New Equipment/Item Ordered (if any)</label>
               <input type="date" id="f-ordered" />
             </div>
             <div class="field">
-              <label class="field-label" for="f-received">Date New Item Received at Clinic</label>
+              <label class="field-label" for="f-received">Date New Equipment/Item Received at Clinic</label>
               <input type="date" id="f-received" />
             </div>
-            <div class="field">
-              <label class="field-label" for="f-replaced">Date New Item Replaced &amp; In Use</label>
+            <div class="field full">
+              <label class="field-label" for="f-replaced">Date New Equipment/Item Replaced and In Use <span class="muted">(filling this marks the issue resolved)</span></label>
               <input type="date" id="f-replaced" />
             </div>
-            <div class="field">
+            <div class="field full">
               <label class="field-label" for="f-comments">Additional Comments</label>
               <input type="text" id="f-comments" placeholder="Notes" />
             </div>
           </div>
-          <label class="resolved-toggle"><input type="checkbox" id="f-resolved" /> Mark as resolved</label>
         </div>
       </details>
 
@@ -530,20 +530,16 @@ function getHtml() {
     <div class="modal-body">
       <div class="modal-grid">
         <div class="field">
-          <label class="field-label" for="m-ordered">Date New Item Ordered</label>
+          <label class="field-label" for="m-ordered">Date New Equipment/Item Ordered (if any)</label>
           <input type="date" id="m-ordered" />
         </div>
         <div class="field">
-          <label class="field-label" for="m-received">Date New Item Received at Clinic</label>
+          <label class="field-label" for="m-received">Date New Equipment/Item Received at Clinic</label>
           <input type="date" id="m-received" />
         </div>
-        <div class="field">
-          <label class="field-label" for="m-replaced">Date New Item Replaced &amp; In Use</label>
+        <div class="field full">
+          <label class="field-label" for="m-replaced">Date New Equipment/Item Replaced and In Use <span class="muted">(filling this resolves the issue)</span></label>
           <input type="date" id="m-replaced" />
-        </div>
-        <div class="field">
-          <label class="field-label">&nbsp;</label>
-          <label class="resolved-toggle" style="padding-top:8px;"><input type="checkbox" id="m-resolved" /> Resolved &amp; in use</label>
         </div>
         <div class="field full">
           <label class="field-label" for="m-comments">Additional Comments</label>
@@ -658,7 +654,6 @@ function collectForm(){
     dateOrdered:       document.getElementById('f-ordered').value,
     dateReceived:      document.getElementById('f-received').value,
     dateReplaced:      document.getElementById('f-replaced').value,
-    resolved:          document.getElementById('f-resolved').checked,
     comments:          document.getElementById('f-comments').value.trim()
   };
 }
@@ -685,7 +680,6 @@ function resetForm(keepStatus){
   ['f-staff','f-notified','f-equipment','f-issue','f-impact','f-comments'].forEach(function(id){document.getElementById(id).value='';});
   ['f-time','f-ordered','f-received','f-replaced'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-  document.getElementById('f-resolved').checked=false;
   var det=document.querySelector('.followup'); if(det) det.open=false;
   if(!keepStatus) document.getElementById('form-status').className='form-status';
 }
@@ -699,7 +693,6 @@ function openModal(id){
   document.getElementById('m-ordered').value=r.dateOrdered||'';
   document.getElementById('m-received').value=r.dateReceived||'';
   document.getElementById('m-replaced').value=r.dateReplaced||'';
-  document.getElementById('m-resolved').checked=!!r.resolved;
   document.getElementById('m-comments').value=r.comments||'';
   document.getElementById('update-overlay').classList.add('open');
 }
@@ -712,7 +705,6 @@ function saveUpdate(){
     dateOrdered:  document.getElementById('m-ordered').value,
     dateReceived: document.getElementById('m-received').value,
     dateReplaced: document.getElementById('m-replaced').value,
-    resolved:     document.getElementById('m-resolved').checked,
     comments:     document.getElementById('m-comments').value.trim()
   };
   var btn=document.getElementById('modal-save');
